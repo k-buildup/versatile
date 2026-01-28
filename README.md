@@ -22,12 +22,12 @@ $ pip install -r requirements.txt
 #### Install Model
 
 1. [Reference](#reference)를 참고해서 모델을 다운로드해 주세요.
-2. 프로젝트 루트에 `models` 폴더를 생성해 주세요.
-3. 다운로드 받은 모델을 `models` 폴더에 넣어주세요.
+2. 프로젝트 내부에 다운로드 받은 모델을 넣어주세요.
+3. `main.py` main 함수에서 `model_path` 변수를 다운로드 받은 모델의 경로로 수정해 주세요.
 
 #### Configure
 
-`ChatBot` 클래스의 `__init__` 메소드를 본인의 컴퓨터 사양에 맞게 수정해 주세요.
+`main.py` 에서 `ModelConfig` 클래스를 본인의 컴퓨터 사양에 맞게 수정해 주세요.
 
 ---
 
@@ -50,7 +50,7 @@ $ python main.py
 
 ### 📚 Reference
 
-- 모델: [QuantFactory / llama-3.2-Korean-Bllossom-3B-GGUF](https://huggingface.co/QuantFactory/llama-3.2-Korean-Bllossom-3B-GGUF) (Q8_0)
+- 모델: [QuantFactory / llama-3-Korean-Bllossom-8B-GGUF](https://huggingface.co/QuantFactory/llama-3-Korean-Bllossom-8B-GGUF) (Q8_0)
 
 ---
 
