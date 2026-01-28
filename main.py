@@ -1,6 +1,6 @@
 from llama_cpp import Llama
 import json
-from typing import List, Dict, Optional
+from typing import List, Dict
 from dataclasses import dataclass
 from enum import Enum
 
@@ -18,9 +18,9 @@ class OutputMode(Enum):
 @dataclass
 class ModelConfig:
     """LLM 모델 설정"""
-    n_ctx: int = 16384
-    n_gpu_layers: int = -1
-    n_batch: int = 8192
+    n_ctx: int = 4096
+    n_gpu_layers: int = 20
+    n_batch: int = 512
     n_threads: int = 6
     n_threads_batch: int = 6
     use_mlock: bool = True
@@ -46,19 +46,19 @@ class GenerationConfig:
 class PromptBuilder:
     """프롬프트 생성 담당 클래스"""
     
-    DEFAULT_SYSTEM_PROMPT = "당신은 버사타일 (Versatile) AI 어시스턴트입니다."
+    DEFAULT_SYSTEM_PROMPT = "You are name is Versatile (버사타일)."
     
     TODOLIST_PROMPT = """
-사용자 입력을 받으면, 단계별 사고를 위한 하위 투두 리스트로 분해하세요.
-리스트는 논리적 순서대로 정렬되어있어야 하고,
-각 하위 투두는 독립적으로 답변이 가능해야 하며,
-하위 투두의 내용은 사용자 입력과 비슷하지 않아야 합니다.
+When you receive user input, break it down into sub-todo lists for step-by-step thinking.
+The list should be sorted in logical order,
+each sub-todo should be independently answerable,
+and the content of sub-todos should not be similar to the user input.
 
-추가적인 사고 과정이 필요 없는 매우 간단한 질문의 경우,
-아무런 요소도 포함하지 않은 빈 배열을 반환하세요.
+For very simple questions that do not require additional thought process,
+return an empty array containing no elements.
 
-답변은 다른 텍스트 없이 무조건 배열로만 반환하세요.
-배열 첫번째 순서는 '사용자가 원하는 내용 파악하기' 이어야 합니다.
+The response must be returned only as an array without any other text.
+The first item in the array must be '사용자가 원하는 내용 파악하기'.
 
 예시)
 사용자 입력: 파이썬으로 웹 크롤러를 만들고 싶은데 어떻게 시작해야 하나요?
@@ -78,7 +78,7 @@ class PromptBuilder:
 """
     
     THINK_STEP_PROMPT = """
-사용자 입력을 받으면, 오직 '{todo}' 단계만 수행하십시오.
+Answer only about '{todo}' in a short and concise manner, always in a single line without any line breaks.
 
 예시)
 사용자 입력: React 상태 관리 라이브러리를 추천해 주세요.
@@ -95,10 +95,9 @@ class PromptBuilder:
 """
     
     FINAL_ANSWER_PROMPT = """
-당신은 단계별 사고를 완료했습니다.
-아래 사고 과정을 바탕으로 사용자 질문에 대한 최종 답변을 작성하십시오.
+Write a final answer to the user input based on the thought process below.
 
-사고 과정:
+Thought process)
 {thinking_process}
 """
     
@@ -223,7 +222,7 @@ class ThinkingProcessor:
     def process_todo_item(self, todo: str, user_message: str) -> str:
         """개별 투두 항목 처리"""
         system_prompt = PromptBuilder.THINK_STEP_PROMPT.format(
-            todo=todo
+            todo=todo,
         )
         
         prompt = PromptBuilder.build(user_message, self.conversation_history, system_prompt)
@@ -334,9 +333,22 @@ class ChatBot:
 
 def main():
     """메인 실행 함수"""
-    model_path = './models/llama-3.2-Korean-Bllossom-3B.Q8_0.gguf'
-    # model_path = './models/llama-3.2-Korean-Bllossom-AICA-5B_f16.gguf'
-    # model_path = './models/llama-3-Korean-Bllossom-8B.f16.gguf'
+
+    # llama-3.2-Korean-Bllossom-3B
+    # model_path = './models/llama-3.2-Korean-Bllossom-3B/f16.gguf'
+    # model_path = './models/llama-3.2-Korean-Bllossom-3B/Q8_0.gguf'
+    
+    # llama-3-Korean-Bllossom-8B
+    # model_path = './models/llama-3-Korean-Bllossom-8B/f16.gguf'
+    model_path = './models/llama-3-Korean-Bllossom-8B/Q8_0.gguf'
+    # model_path = './models/llama-3-Korean-Bllossom-8B/Q4_K_M.gguf'
+    # model_path = './models/llama-3-Korean-Bllossom-8B/Open-Ko Q4_K_M.gguf'
+    
+    # llama-3-Korean-Bllossom-70B
+    # model_path = './models/llama-3-Korean-Bllossom-70B/Q4_K_M.gguf'
+
+    # aya-expanse-8b-abliterated
+    # model_path = './models/aya-expanse-8b-abliterated/Q8_0.gguf'
     
     chatbot = ChatBot(model_path)
     
