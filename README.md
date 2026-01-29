@@ -4,6 +4,14 @@
 
 ---
 
+### 🔥 Stack
+
+- Python 3.12.7
+- llama-cpp-python
+- langchain
+
+---
+
 ### ✨ Setup
 
 #### Clone Repository
@@ -58,5 +66,6 @@ $ python main.py
 
 - [x] Q&A
 - [x] 대화 기억
+- [x] LangChain 적용
 - [x] 사고 모드
 - [ ] MCP 코어
