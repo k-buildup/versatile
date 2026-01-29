@@ -1,8 +1,14 @@
-from llama_cpp import Llama
-import json
-from typing import List, Dict
+from typing import List, Dict, Iterator
 from dataclasses import dataclass
 from enum import Enum
+import json
+
+from llama_cpp import Llama
+
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
+from langchain_core.chat_history import InMemoryChatMessageHistory
+from langchain_core.language_models.llms import LLM
+from langchain_core.outputs import GenerationChunk
 
 
 class OutputMode(Enum):
@@ -102,18 +108,30 @@ Thought process)
 """
     
     @staticmethod
-    def build(user_message: str, conversation_history: List[Dict], 
-              system_prompt: str = "") -> str:
-        """대화 프롬프트 생성"""
+    def build_from_messages(messages: List[BaseMessage], system_prompt: str = "") -> str:
+        """LangChain 메시지 리스트로부터 프롬프트 생성"""
         prompt = f"<|start_header_id|>system<|end_header_id|>\n\n{PromptBuilder.DEFAULT_SYSTEM_PROMPT.strip()}\n\n{system_prompt.strip()}<|eot_id|>"
         
-        for msg in conversation_history:
-            role = msg['role']
-            content = msg['content'].strip()
+        for msg in messages:
+            if isinstance(msg, HumanMessage):
+                role = "user"
+            elif isinstance(msg, AIMessage):
+                role = "assistant"
+            elif isinstance(msg, SystemMessage):
+                continue
+            else:
+                role = "user"
+            
+            content = msg.content.strip()
             prompt += f"<|start_header_id|>{role}<|end_header_id|>\n\n{content}<|eot_id|>"
         
+        return prompt
+    
+    @staticmethod
+    def build(user_message: str, messages: List[BaseMessage], system_prompt: str = "") -> str:
+        """현재 사용자 메시지를 포함한 전체 프롬프트 생성"""
+        prompt = PromptBuilder.build_from_messages(messages, system_prompt)
         prompt += f"<|start_header_id|>user<|end_header_id|>\n\n{user_message}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
-        
         return prompt
 
 
@@ -140,109 +158,137 @@ class OutputFormatter:
         print(tag, end='\n' if newline else '')
 
 
-class LLMEngine:
-    """LLM 모델 실행 엔진"""
+class LlamaCppLLM(LLM):
+    """LangChain과 호환되는 llama-cpp-python LLM 래퍼"""
     
-    def __init__(self, model_path: str, config: ModelConfig = None):
-        self.config = config or ModelConfig()
-        self.model = Llama(
+    model_path: str
+    llm_config: ModelConfig = ModelConfig()
+    gen_config: GenerationConfig = GenerationConfig()
+    
+    model_config = {"arbitrary_types_allowed": True}
+    
+    def __init__(self, model_path: str, llm_model_config: ModelConfig = None, 
+                 generation_config: GenerationConfig = None, **kwargs):
+        config = llm_model_config or ModelConfig()
+        gen_cfg = generation_config or GenerationConfig()
+        
+        super().__init__(
             model_path=model_path,
-            n_ctx=self.config.n_ctx,
-            n_gpu_layers=self.config.n_gpu_layers,
-            n_batch=self.config.n_batch,
-            n_threads=self.config.n_threads,
-            n_threads_batch=self.config.n_threads_batch,
-            use_mlock=self.config.use_mlock,
-            use_mmap=self.config.use_mmap,
-            verbose=self.config.verbose,
+            llm_config=config,
+            gen_config=gen_cfg,
+            **kwargs
+        )
+        
+        self._model = Llama(
+            model_path=model_path,
+            n_ctx=self.llm_config.n_ctx,
+            n_gpu_layers=self.llm_config.n_gpu_layers,
+            n_batch=self.llm_config.n_batch,
+            n_threads=self.llm_config.n_threads,
+            n_threads_batch=self.llm_config.n_threads_batch,
+            use_mlock=self.llm_config.use_mlock,
+            use_mmap=self.llm_config.use_mmap,
+            verbose=self.llm_config.verbose,
         )
     
-    def generate(self, prompt: str, config: GenerationConfig, 
-                 stream_callback=None) -> str:
-        """텍스트 생성"""
-        output = self.model(
+    @property
+    def _llm_type(self) -> str:
+        return "llama-cpp"
+    
+    def _call(self, prompt: str, stop: List[str] = None, **kwargs) -> str:
+        """비스트리밍 호출"""
+        stop_sequences = stop or self.gen_config.stop
+        
+        output = self._model(
             prompt,
-            max_tokens=config.max_tokens,
-            temperature=config.temperature,
-            top_p=config.top_p,
-            top_k=config.top_k,
-            repeat_penalty=config.repeat_penalty,
-            stop=config.stop,
+            max_tokens=kwargs.get('max_tokens', self.gen_config.max_tokens),
+            temperature=kwargs.get('temperature', self.gen_config.temperature),
+            top_p=kwargs.get('top_p', self.gen_config.top_p),
+            top_k=kwargs.get('top_k', self.gen_config.top_k),
+            repeat_penalty=kwargs.get('repeat_penalty', self.gen_config.repeat_penalty),
+            stop=stop_sequences,
+            stream=False
+        )
+        
+        return output['choices'][0]['text']
+    
+    def _stream(self, prompt: str, stop: List[str] = None, **kwargs) -> Iterator[GenerationChunk]:
+        """스트리밍 호출"""
+        stop_sequences = stop or self.gen_config.stop
+        
+        output = self._model(
+            prompt,
+            max_tokens=kwargs.get('max_tokens', self.gen_config.max_tokens),
+            temperature=kwargs.get('temperature', self.gen_config.temperature),
+            top_p=kwargs.get('top_p', self.gen_config.top_p),
+            top_k=kwargs.get('top_k', self.gen_config.top_k),
+            repeat_penalty=kwargs.get('repeat_penalty', self.gen_config.repeat_penalty),
+            stop=stop_sequences,
             stream=True
         )
         
-        full_response = ""
         for chunk in output:
             text = chunk['choices'][0]['text']
-            if stream_callback:
-                stream_callback(text)
-            full_response += text
-        
-        return full_response
+            yield GenerationChunk(text=text)
 
 
 class ThinkingProcessor:
     """사고 과정 처리 담당 클래스"""
     
-    def __init__(self, engine: LLMEngine, conversation_history: List[Dict]):
-        self.engine = engine
-        self.conversation_history = conversation_history
+    def __init__(self, llm: LlamaCppLLM, chat_history: InMemoryChatMessageHistory):
+        self.llm = llm
+        self.chat_history = chat_history
     
     def generate_todolist(self, user_message: str) -> List[str]:
         """투두 리스트 생성"""
+        messages = self.chat_history.messages
         prompt = PromptBuilder.build(
             user_message, 
-            self.conversation_history,
+            messages,
             PromptBuilder.TODOLIST_PROMPT
-        )
-        
-        config = GenerationConfig(
-            max_tokens=256,
-            temperature=0.3,
-            top_p=0.8,
-            repeat_penalty=1.1
         )
         
         OutputFormatter.print_tag(OutputMode.TODOLIST, is_start=True, newline=False)
         
-        response = self.engine.generate(
-            prompt, 
-            config,
-            lambda text: OutputFormatter.print_stream(OutputMode.TODOLIST, text)
-        )
+        full_response = ""
+        for chunk in self.llm._stream(
+            prompt,
+            max_tokens=256,
+            temperature=0.3,
+            top_p=0.8,
+            repeat_penalty=1.1
+        ):
+            text = chunk.text
+            OutputFormatter.print_stream(OutputMode.TODOLIST, text)
+            full_response += text
         
         OutputFormatter.print_tag(OutputMode.TODOLIST, is_start=False)
         print()
         
         try:
-            return json.loads(response)
+            return json.loads(full_response)
         except json.JSONDecodeError:
             return []
     
     def process_todo_item(self, todo: str, user_message: str) -> str:
         """개별 투두 항목 처리"""
-        system_prompt = PromptBuilder.THINK_STEP_PROMPT.format(
-            todo=todo,
-        )
-        
-        prompt = PromptBuilder.build(user_message, self.conversation_history, system_prompt)
-        
-        config = GenerationConfig(max_tokens=512)
+        system_prompt = PromptBuilder.THINK_STEP_PROMPT.format(todo=todo)
+        messages = self.chat_history.messages
+        prompt = PromptBuilder.build(user_message, messages, system_prompt)
         
         OutputFormatter.print_tag(OutputMode.TODO, todo, is_start=True, newline=False)
         OutputFormatter.print_tag(OutputMode.TODO, is_start=False)
-
         OutputFormatter.print_tag(OutputMode.RESULT, is_start=True, newline=False)
         
-        response = self.engine.generate(
-            prompt,
-            config,
-            lambda text: OutputFormatter.print_stream(OutputMode.RESULT, text)
-        )
+        full_response = ""
+        for chunk in self.llm._stream(prompt, max_tokens=512):
+            text = chunk.text
+            OutputFormatter.print_stream(OutputMode.RESULT, text)
+            full_response += text
         
         OutputFormatter.print_tag(OutputMode.RESULT, is_start=False)
         
-        return response.strip()
+        return full_response.strip()
     
     def execute_thinking(self, user_message: str) -> List[Dict[str, str]]:
         """전체 사고 과정 실행"""
@@ -265,33 +311,35 @@ class ThinkingProcessor:
 
 
 class ChatBot:
-    """메인 챗봇 클래스"""
+    """메인 챗봇 클래스 (LangChain 적용)"""
     
-    def __init__(self, model_path: str, model_config: ModelConfig = None):
-        self.engine = LLMEngine(model_path, model_config)
-        self.conversation_history = []
+    def __init__(self, model_path: str, llm_model_config: ModelConfig = None):
+        self.llm = LlamaCppLLM(model_path, llm_model_config)
+        self.chat_history = InMemoryChatMessageHistory()
     
     def chat(self, user_message: str) -> str:
         """일반 대화"""
-        prompt = PromptBuilder.build(user_message, self.conversation_history)
-        config = GenerationConfig()
+        messages = self.chat_history.messages
+        prompt = PromptBuilder.build(user_message, messages)
         
         OutputFormatter.print_tag(OutputMode.BASIC, is_start=True, newline=False)
         
-        response = self.engine.generate(
-            prompt,
-            config,
-            lambda text: OutputFormatter.print_stream(OutputMode.BASIC, text)
-        )
+        full_response = ""
+        for chunk in self.llm._stream(prompt):
+            text = chunk.text
+            OutputFormatter.print_stream(OutputMode.BASIC, text)
+            full_response += text
         
         OutputFormatter.print_tag(OutputMode.BASIC, is_start=False)
         
-        self._update_history(user_message, response.strip())
-        return response
+        self.chat_history.add_user_message(user_message)
+        self.chat_history.add_ai_message(full_response.strip())
+        
+        return full_response
     
     def think_and_answer(self, user_message: str) -> str:
         """사고 과정을 거친 답변"""
-        processor = ThinkingProcessor(self.engine, self.conversation_history)
+        processor = ThinkingProcessor(self.llm, self.chat_history)
         thinking = processor.execute_thinking(user_message)
         
         thinking_text = "\n\n".join(
@@ -302,33 +350,34 @@ class ChatBot:
             thinking_process=thinking_text
         )
         
-        prompt = PromptBuilder.build(user_message, self.conversation_history, system_prompt)
-        config = GenerationConfig()
+        messages = self.chat_history.messages
+        prompt = PromptBuilder.build(user_message, messages, system_prompt)
         
         OutputFormatter.print_tag(OutputMode.BASIC, is_start=True, newline=False)
         
-        response = self.engine.generate(
-            prompt,
-            config,
-            lambda text: OutputFormatter.print_stream(OutputMode.BASIC, text)
-        )
+        full_response = ""
+        for chunk in self.llm._stream(prompt):
+            text = chunk.text
+            OutputFormatter.print_stream(OutputMode.BASIC, text)
+            full_response += text
         
         OutputFormatter.print_tag(OutputMode.BASIC, is_start=False)
         print()
         
-        self._update_history(user_message, response.strip())
-        return response
+        self.chat_history.add_user_message(user_message)
+        self.chat_history.add_ai_message(full_response.strip())
+        
+        return full_response
     
     def clear_history(self):
         """대화 기록 초기화"""
-        self.conversation_history.clear()
+        self.chat_history.clear()
         OutputFormatter.print_tag(OutputMode.LOG, "conversation history cleared.", is_start=True)
         OutputFormatter.print_tag(OutputMode.LOG, is_start=False)
     
-    def _update_history(self, user_message: str, assistant_response: str):
-        """대화 기록 업데이트"""
-        self.conversation_history.append({'role': 'user', 'content': user_message})
-        self.conversation_history.append({'role': 'assistant', 'content': assistant_response})
+    def get_history(self) -> List[BaseMessage]:
+        """대화 기록 조회"""
+        return self.chat_history.messages
 
 
 def main():
