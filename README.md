@@ -68,4 +68,7 @@ $ python main.py
 - [x] 대화 기억
 - [x] LangChain 적용
 - [x] 사고 모드
-- [ ] MCP 코어
+- [x] MCP 코어
+
+- [ ] 사고 모드 개선
+- [ ] MCP (툴) 개선
