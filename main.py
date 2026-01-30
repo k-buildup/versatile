@@ -1,12 +1,33 @@
+from pydantic import BaseModel, Field
 from dataclasses import dataclass
 from typing import List, Dict
+from datetime import datetime
 import multiprocessing
 from enum import Enum
 import json
 
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage, ToolMessage
 from langchain_community.chat_models import ChatLlamaCpp
 from llama_cpp import LlamaGrammar
+from langchain.tools import tool
+
+
+class DateTimeInput(BaseModel):
+    location: str = Field(description="The city and state, e.g. Seoul, Republic of Korea")
+
+@tool("get_datetime", args_schema=DateTimeInput)
+def get_datetime(location: str):
+    """Get the current datetime in a given location"""
+    return f"Now the datetime in {location} is {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+
+
+class StockPriceInput(BaseModel):
+    symbol: str = Field(description="The stock symbol, e.g. AAPL, MSFT")
+
+@tool("get_stock_price", args_schema=StockPriceInput)
+def get_stock_price(symbol: str):
+    """Get the current stock price for a given symbol"""
+    return f"Now the stock price for {symbol} is $150.00"
 
 
 class OutputMode(Enum):
@@ -17,7 +38,8 @@ class OutputMode(Enum):
     TODO = "todo"
     RESULT = "result"
     LOG = "log"
-    TOOL = "tool"
+    TOOL_CALL = "tool_call"
+    TOOL_RESULT = "tool_result"
 
 
 @dataclass
@@ -274,6 +296,58 @@ class ChatBot:
         
         return full_response
     
+    def tool(self, user_message: str) -> str:
+        messages = [
+            SystemMessage(content=PromptBuilder.DEFAULT_SYSTEM_PROMPT),
+            *self.chat_history,
+            HumanMessage(content=user_message)
+        ]
+        
+        llm_with_tools = self.llm.bind_tools(
+            tools=[get_datetime, get_stock_price],
+            tool_choice={"type": "function", "function": {"name": "get_stock_price"}}
+        )
+        
+        ai_msg = llm_with_tools.invoke(messages)
+
+        if ai_msg.tool_calls:
+            for index, tool_call in enumerate(ai_msg.tool_calls):
+                if index > 0:
+                    print()
+                
+                tool_name = tool_call["name"]
+                tool_args = tool_call["args"]
+                tool_id = tool_call["id"]
+                
+                OutputFormatter.print_tag(OutputMode.TOOL_CALL, is_start=True, newline=False)
+                print(tool_name, end="")
+                OutputFormatter.print_tag(OutputMode.TOOL_CALL, is_start=False)
+                
+                if tool_name == "get_datetime":
+                    result = get_datetime.invoke(tool_args)
+                    
+                if tool_name == "get_stock_price":
+                    result = get_stock_price.invoke(tool_args)
+                    
+                OutputFormatter.print_tag(OutputMode.TOOL_RESULT, is_start=True, newline=False)
+                print(result, end="")
+                OutputFormatter.print_tag(OutputMode.TOOL_RESULT, is_start=False)
+                
+                messages.append(ToolMessage(content=str(result), tool_call_id=tool_id))
+
+        print()
+        OutputFormatter.print_tag(OutputMode.BASIC, is_start=True, newline=False)
+        
+        final_response = ""
+        for chunk in self.llm.stream(messages):
+            text = chunk.content
+            OutputFormatter.print_stream(OutputMode.BASIC, text)
+            final_response += text
+        
+        OutputFormatter.print_tag(OutputMode.BASIC, is_start=False)
+        
+        return final_response
+    
     def think_and_answer(self, user_message: str) -> str:
         """사고 과정을 거친 답변"""
         processor = ThinkingProcessor(self.llm, self.chat_history)
@@ -347,6 +421,7 @@ def main():
     print("commands: 'quit', 'clear'")
     print()
     print("qna: '<prompt>'")
+    print("tool mode: '@tool <prompt>'")
     print("incident mode: '@think <prompt>'")
     print("=" * 40)
     print()
@@ -371,6 +446,14 @@ def main():
             OutputFormatter.print_tag(OutputMode.LOG, is_start=False)
             print()
             chatbot.think_and_answer(user_input[7:])
+            continue
+        
+        if user_input.lower().startswith('@tool '):
+            OutputFormatter.print_tag(OutputMode.LOG, "tool mode enabled.", is_start=True, newline=False)
+            OutputFormatter.print_tag(OutputMode.LOG, is_start=False)
+            print()
+            chatbot.tool(user_input[6:])
+            print()
             continue
         
         print()
