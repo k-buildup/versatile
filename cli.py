@@ -1,9 +1,15 @@
+from dotenv import load_dotenv
 import asyncio
+import os
+
 from agent import (
     VersatileAgent,
     OutputMode,
     OutputEvent
 )
+
+# 환경 변수 로드
+load_dotenv()
 
 
 class CLIInterface:
@@ -52,26 +58,13 @@ class CLIInterface:
 async def main():
     """메인 실행 함수"""
     
-    # llama-3.2-Korean-Bllossom-3B
-    # model_path = './models/llama-3.2-Korean-Bllossom-3B/f16.gguf'
-    # model_path = './models/llama-3.2-Korean-Bllossom-3B/Q8_0.gguf'
+    # 모델 로드
+    model_path = os.getenv("MODEL_PATH", './models/llama-3-Korean-Bllossom-8B/Q8_0.gguf')
     
-    # llama-3-Korean-Bllossom-8B
-    # model_path = './models/llama-3-Korean-Bllossom-8B/f16.gguf'
-    model_path = './models/llama-3-Korean-Bllossom-8B/Q8_0.gguf'
-    # model_path = './models/llama-3-Korean-Bllossom-8B/Q4_K_M.gguf'
-    # model_path = './models/llama-3-Korean-Bllossom-8B/Open-Ko Q4_K_M.gguf'
-    
-    # llama-3-Korean-Bllossom-70B
-    # model_path = './models/llama-3-Korean-Bllossom-70B/Q4_K_M.gguf'
-
-    # aya-expanse-8b-abliterated
-    # model_path = './models/aya-expanse-8b-abliterated/Q8_0.gguf'
-    
-    print("Loading model...")
+    print(f"Loading model from {model_path}...")
     agent = VersatileAgent(model_path)
-    cli = CLIInterface(agent)
     print("Model loaded successfully!")
+    cli = CLIInterface(agent)
     print()
     
     print("=" * 40)
