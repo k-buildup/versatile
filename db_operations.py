@@ -13,7 +13,6 @@ from database import User, ChatSession, Message, ToolLog, UserFeedback
 
 def get_password_hash(password: str) -> str:
     """비밀번호 해싱"""
-    # bcrypt는 최대 72바이트까지만 지원
     password_bytes = password.encode('utf-8')[:72]
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(password_bytes, salt)
@@ -23,7 +22,6 @@ def get_password_hash(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """비밀번호 검증"""
     try:
-        # bcrypt는 최대 72바이트까지만 지원
         password_bytes = plain_password.encode('utf-8')[:72]
         hashed_bytes = hashed_password.encode('utf-8')
         return bcrypt.checkpw(password_bytes, hashed_bytes)
@@ -164,14 +162,16 @@ def create_message(
     session_id: str,
     role: str,
     content: str,
-    mode: str = "chat"
+    mode: str = "chat",
+    thinking_process: Optional[List[Dict]] = None
 ) -> Message:
-    """메시지 생성"""
+    """메시지 생성 (사고 과정 포함)"""
     message = Message(
         session_id=session_id,
         role=role,
         content=content,
-        mode=mode
+        mode=mode,
+        thinking_process=thinking_process  # JSON으로 저장
     )
     db.add(message)
     db.commit()
@@ -318,18 +318,26 @@ def get_feedback_stats(db: Session, user_id: Optional[int] = None) -> Dict:
 # History Management
 # ============================================================================
 
-def get_formatted_history(db: Session, session_id: str) -> List[Dict[str, str]]:
-    """포맷된 대화 기록 반환"""
+def get_formatted_history(db: Session, session_id: str, include_thinking: bool = True) -> List[Dict[str, any]]:
+    """포맷된 대화 기록 반환 (사고 과정 포함 옵션)"""
     messages = get_session_messages(db, session_id)
     
-    return [
-        {
+    result = []
+    for msg in messages:
+        message_dict = {
             "role": msg.role,
             "content": msg.content,
+            "mode": msg.mode,
             "timestamp": msg.created_at.isoformat()
         }
-        for msg in messages
-    ]
+        
+        # think 모드이고 사고 과정이 있으면 포함
+        if include_thinking and msg.mode == "think" and msg.thinking_process:
+            message_dict["thinking_process"] = msg.thinking_process
+        
+        result.append(message_dict)
+    
+    return result
 
 
 def clear_session_history(db: Session, session_id: str, user_id: int) -> Dict:

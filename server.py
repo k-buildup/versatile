@@ -61,7 +61,7 @@ class UserResponse(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
-    session_id: Optional[str] = None  # None이면 새 세션 생성
+    session_id: Optional[str] = None
     mode: str = "chat"
 
 
@@ -218,14 +218,12 @@ app.add_middleware(
 async def register(user_data: UserRegister, db: Session = Depends(get_db_session)):
     """회원가입"""
     try:
-        # 중복 확인
         if db_ops.get_user_by_username(db, user_data.username):
             raise HTTPException(status_code=400, detail="Username already exists")
         
         if db_ops.get_user_by_email(db, user_data.email):
             raise HTTPException(status_code=400, detail="Email already exists")
         
-        # 사용자 생성
         user = db_ops.create_user(
             db,
             username=user_data.username,
@@ -234,7 +232,6 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db_session
             display_name=user_data.display_name
         )
         
-        # 토큰 생성
         access_token = create_access_token(data={"user_id": user.id})
         
         return Token(
@@ -415,13 +412,11 @@ async def chat(
     try:
         # 세션 처리
         if not request.session_id:
-            # 새 세션 생성
             session_id = f"user_{current_user.id}_{int(datetime.now().timestamp() * 1000)}"
             title = request.message[:30] + "..." if len(request.message) > 30 else request.message
             db_ops.create_session(db, session_id, current_user.id, title)
         else:
             session_id = request.session_id
-            # 권한 확인
             session = db_ops.get_session(db, session_id)
             if not session or session.user_id != current_user.id:
                 raise HTTPException(status_code=403, detail="Access denied")
@@ -437,6 +432,8 @@ async def chat(
     
     async def event_generator():
         assistant_response = ""
+        thinking_process = []  # 사고 과정 저장
+        current_todo = None
         
         try:
             if request.mode == "tool":
@@ -458,14 +455,35 @@ async def chat(
                     }
                 
                 event_type = event_dict.get("type")
-                if event_type in ["text", "stream"]:
-                    content = event_dict.get("content", "")
+                mode = event_dict.get("mode")
+                content = event_dict.get("content", "")
+                is_start = event_dict.get("is_start", False)
+                
+                # Think 모드 사고 과정 수집
+                if request.mode == "think":
+                    if mode == "todo" and is_start and content:
+                        # 새 todo 시작
+                        if current_todo:
+                            thinking_process.append(current_todo)
+                        current_todo = {"todo": content, "content": ""}
+                    
+                    elif mode == "result" and event_type == "stream" and content:
+                        # result 내용 수집
+                        if current_todo:
+                            current_todo["content"] += content
+                
+                # 최종 응답 수집
+                if event_type in ["text", "stream"] and mode == "basic":
                     if content:
                         assistant_response += content
                 
                 yield f"data: {json.dumps(event_dict, ensure_ascii=False)}\n\n"
             
-            # 어시스턴트 응답 저장
+            # 마지막 todo 저장
+            if current_todo:
+                thinking_process.append(current_todo)
+            
+            # 어시스턴트 응답 저장 (사고 과정 포함)
             if assistant_response.strip():
                 try:
                     with get_db() as db_context:
@@ -474,12 +492,13 @@ async def chat(
                             session_id,
                             "assistant",
                             assistant_response,
-                            request.mode
+                            request.mode,
+                            thinking_process=thinking_process if thinking_process else None
                         )
                 except Exception as db_error:
                     print(f"Failed to save assistant message: {db_error}")
             
-            # 세션 ID 전송 (새 세션인 경우)
+            # 세션 ID 전송
             if not request.session_id:
                 yield f"data: {json.dumps({'type': 'session_created', 'session_id': session_id}, ensure_ascii=False)}\n\n"
             
@@ -518,7 +537,7 @@ async def get_history(
         if not session or session.user_id != current_user.id:
             raise HTTPException(status_code=404, detail="Session not found")
         
-        formatted_history = db_ops.get_formatted_history(db, session_id)
+        formatted_history = db_ops.get_formatted_history(db, session_id, include_thinking=True)
         
         return HistoryResponse(
             session_id=session_id,

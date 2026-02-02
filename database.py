@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, TIMESTAMP, Enum, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, TIMESTAMP, Enum, ForeignKey, JSON
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from contextlib import contextmanager
@@ -83,6 +83,7 @@ class Message(Base):
     role = Column(Enum('user', 'assistant', 'system'), nullable=False)
     content = Column(Text, nullable=False)
     mode = Column(String(50), default='chat')
+    thinking_process = Column(JSON, nullable=True, comment='think 모드에서 사고 과정 저장')
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), index=True)
     
     # Relationships

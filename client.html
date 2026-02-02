@@ -214,6 +214,39 @@
       .modal.active {
         display: flex;
       }
+
+      /* 사고 과정 애니메이션 */
+      .thinking-step {
+        transition: all 0.3s ease;
+      }
+
+      .thinking-step.active {
+        /* 현재 단계 강조 */
+      }
+
+      .thinking-step.completed {
+        opacity: 0.7;
+      }
+
+      .thinking-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+      }
+
+      .thinking-content.expanded {
+        max-height: 500px;
+        overflow-y: auto;
+      }
+
+      /* Chevron 애니메이션 */
+      .chevron-icon {
+        transition: transform 0.3s ease-in-out;
+      }
+
+      .chevron-icon.collapsed {
+        transform: rotate(-90deg);
+      }
     </style>
   </head>
   <body class="bg-dark-bg text-dark-text dark">
@@ -378,7 +411,6 @@
           >
             <i data-lucide="user" class="w-4 h-4"></i>
             <span id="userDisplayName">User</span>
-            <i data-lucide="chevron-down" class="w-4 h-4 ml-auto"></i>
           </button>
           <button
             id="logoutBtn"
@@ -756,7 +788,61 @@
 
           if (data.history && data.history.length > 0) {
             data.history.forEach((msg) => {
-              addMessage(msg.role, msg.content, msg.role === "assistant");
+              if (msg.role === "user") {
+                addMessage(msg.role, msg.content);
+              } else if (msg.role === "assistant") {
+                // Think 모드였고 thinking_process가 있는 경우
+                if (msg.thinking_process && msg.thinking_process.length > 0) {
+                  const thinkingMessage = createThinkingMessage();
+
+                  // 각 사고 단계 렌더링
+                  msg.thinking_process.forEach((step, index) => {
+                    const stepElement = addThinkingStep(
+                      thinkingMessage.thinkingContainer,
+                      step.todo,
+                    );
+
+                    // 사고 과정 내용 추가
+                    if (step.content) {
+                      const wrapper = stepElement.contentWrapper;
+                      stepElement.contentDiv.dataset.rawText = step.content;
+
+                      try {
+                        wrapper.innerHTML = marked.parse(step.content);
+                        wrapper
+                          .querySelectorAll("pre code")
+                          .forEach((block) => {
+                            hljs.highlightElement(block);
+                            block.dataset.highlighted = "yes";
+                          });
+                      } catch (e) {
+                        stepElement.contentDiv.textContent = step.content;
+                      }
+                    }
+
+                    // 완료된 단계로 표시 (접힌 상태로)
+                    completeThinkingStep(stepElement.stepDiv, true);
+                  });
+
+                  // 최종 응답 추가
+                  if (msg.content) {
+                    const finalResponse = document.createElement("div");
+                    finalResponse.className =
+                      "prose prose-invert max-w-none markdown-content";
+                    finalResponse.innerHTML = marked.parse(msg.content);
+                    finalResponse
+                      .querySelectorAll("pre code")
+                      .forEach((block) => {
+                        hljs.highlightElement(block);
+                        block.dataset.highlighted = "yes";
+                      });
+                    thinkingMessage.contentDiv.appendChild(finalResponse);
+                  }
+                } else {
+                  // 일반 메시지 (Chat 또는 Tool 모드)
+                  addMessage(msg.role, msg.content, true);
+                }
+              }
             });
           }
         } catch (error) {
@@ -805,7 +891,6 @@
           btn.classList.add("bg-dark-text/10");
           btn.classList.remove("hover:bg-dark-text/10");
           currentMode = btn.dataset.mode;
-          addSystemMessage(`모드 변경: ${currentMode}`);
         });
       });
 
@@ -857,8 +942,6 @@
       function addMessage(role, content, isMarkdown = false) {
         welcomeMessage.classList.add("hidden");
 
-        // [변경됨] 사용자 메시지 오른쪽 정렬 로직(ml-auto, flex-row-reverse) 제거
-        // 이제 role에 관계없이 모든 메시지가 왼쪽 정렬(기본값)됩니다.
         const messageDiv = document.createElement("div");
         messageDiv.className = "message-item flex gap-4 max-w-3xl m-[0_auto]";
 
@@ -866,7 +949,6 @@
         avatar.className =
           "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0";
 
-        // 프로필 아이콘 색상으로 화자 구분 (User: Amber, AI: Dark Hover)
         if (role === "user") {
           avatar.className += " bg-amber-700 text-white";
           avatar.innerHTML = '<i data-lucide="user" class="w-4 h-4"></i>';
@@ -882,9 +964,6 @@
         messageContent.className = "prose prose-invert max-w-none";
 
         if (role === "user") {
-          // [변경됨] 말풍선 스타일 조정
-          // 1. rounded-tr-sm -> rounded-tl-sm: 꼬리 방향을 왼쪽(프로필 쪽)으로 변경
-          // 2. 배경색(bg-dark-hover)은 유지하여 AI 메시지(배경 없음)와 시각적 구분
           messageContent.className +=
             " bg-dark-hover px-4 py-3 rounded-2xl rounded-tl-sm";
         } else {
@@ -909,6 +988,99 @@
         scrollToBottom();
 
         return messageContent;
+      }
+
+      function createThinkingMessage() {
+        welcomeMessage.classList.add("hidden");
+
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "message-item flex gap-4 max-w-3xl m-[0_auto]";
+
+        const avatar = document.createElement("div");
+        avatar.className =
+          "w-8 h-8 rounded-full bg-dark-hover flex items-center justify-center flex-shrink-0";
+        avatar.innerHTML = '<i data-lucide="bot" class="w-4 h-4"></i>';
+
+        const contentDiv = document.createElement("div");
+        contentDiv.className = "flex-1 space-y-2 mt-[3px]";
+
+        const thinkingContainer = document.createElement("div");
+        thinkingContainer.className = "flex flex-col gap-2";
+        thinkingContainer.dataset.thinkingContainer = "true";
+
+        contentDiv.appendChild(thinkingContainer);
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(contentDiv);
+
+        chatContainer.insertBefore(messageDiv, typingIndicator);
+        lucide.createIcons();
+        scrollToBottom();
+
+        return { messageDiv, thinkingContainer, contentDiv };
+      }
+
+      function addThinkingStep(container, todoText) {
+        const stepDiv = document.createElement("div");
+        stepDiv.className = "thinking-step flex flex-col gap-2";
+        stepDiv.dataset.stepStatus = "active";
+
+        const headerDiv = document.createElement("div");
+        headerDiv.className =
+          "flex items-center gap-1 cursor-pointer select-none";
+        headerDiv.innerHTML = `
+          <span class="text-dark-text/80 animate-pulse">${todoText}</span>
+          <i data-lucide="chevron-down" class="w-4 h-4 text-dark-text/40 chevron-icon"></i>
+        `;
+
+        const contentDiv = document.createElement("div");
+        contentDiv.className = "thinking-content expanded markdown-content";
+        contentDiv.innerHTML = `<p class="text-dark-text"></p>`;
+
+        // 토글 기능
+        headerDiv.addEventListener("click", () => {
+          const icon = headerDiv.querySelector(".chevron-icon");
+          const isExpanded = contentDiv.classList.contains("expanded");
+
+          if (isExpanded) {
+            contentDiv.classList.remove("expanded");
+            icon.classList.add("collapsed");
+          } else {
+            contentDiv.classList.add("expanded");
+            icon.classList.remove("collapsed");
+          }
+        });
+
+        stepDiv.appendChild(headerDiv);
+        stepDiv.appendChild(contentDiv);
+        container.appendChild(stepDiv);
+
+        lucide.createIcons();
+        scrollToBottom();
+
+        return {
+          stepDiv,
+          contentDiv: contentDiv.querySelector("p"),
+          contentWrapper: contentDiv,
+        };
+      }
+
+      function completeThinkingStep(stepDiv, shouldCollapse = true) {
+        stepDiv.dataset.stepStatus = "completed";
+        const header = stepDiv.querySelector("span");
+        if (header) {
+          header.classList.remove("animate-pulse");
+        }
+        stepDiv.classList.add("completed");
+
+        // 사고 과정이 완료되면 기본적으로 닫기
+        if (shouldCollapse) {
+          const contentDiv = stepDiv.querySelector(".thinking-content");
+          const icon = stepDiv.querySelector(".chevron-icon");
+          if (contentDiv && icon) {
+            contentDiv.classList.remove("expanded");
+            icon.classList.add("collapsed");
+          }
+        }
       }
 
       function addSystemMessage(content) {
@@ -978,6 +1150,9 @@
 
           const reader = response.body.getReader();
           const decoder = new TextDecoder();
+
+          let thinkingMessage = null;
+          let currentThinkingStep = null;
           let currentMessageDiv = null;
           let currentText = "";
           let buffer = "";
@@ -1000,6 +1175,9 @@
                   console.log("Stream completed");
                   if (currentMessageDiv && currentText) {
                     updateMessage(currentMessageDiv, currentText);
+                  }
+                  if (currentThinkingStep) {
+                    completeThinkingStep(currentThinkingStep.stepDiv, true);
                   }
                   break;
                 }
@@ -1024,21 +1202,92 @@
             }
 
             if (type === "tag") {
-              if (is_start) {
-                if (mode === "basic" || mode === "result") {
-                  currentMessageDiv = addMessage("assistant", "");
+              if (mode === "todolist") {
+                // 투두리스트 시작/종료는 무시 (내용만 활용)
+                return;
+              } else if (mode === "think") {
+                if (is_start) {
+                  // Think 모드 시작 - 사고 과정 컨테이너 생성
+                  if (!thinkingMessage) {
+                    thinkingMessage = createThinkingMessage();
+                  }
+                } else {
+                  // Think 모드 종료
+                  if (currentThinkingStep) {
+                    completeThinkingStep(currentThinkingStep.stepDiv, true);
+                    currentThinkingStep = null;
+                  }
+                }
+              } else if (mode === "todo") {
+                if (is_start && content) {
+                  // 이전 단계 완료 처리 (닫기)
+                  if (currentThinkingStep) {
+                    completeThinkingStep(currentThinkingStep.stepDiv, true);
+                  }
+
+                  // 새 사고 단계 추가
+                  if (thinkingMessage) {
+                    currentThinkingStep = addThinkingStep(
+                      thinkingMessage.thinkingContainer,
+                      content,
+                    );
+                  }
+                }
+              } else if (mode === "result") {
+                // Result 내용은 thinking step의 content에 표시
+                if (is_start) {
                   currentText = "";
                 }
-              } else {
-                if (currentMessageDiv && currentText) {
-                  updateMessage(currentMessageDiv, currentText);
+              } else if (mode === "basic") {
+                if (is_start) {
+                  // 최종 응답 시작
+                  if (thinkingMessage) {
+                    // Think 모드였다면 기존 컨테이너의 contentDiv 사용
+                    currentMessageDiv = document.createElement("div");
+                    currentMessageDiv.className =
+                      "prose prose-invert max-w-none markdown-content";
+                    thinkingMessage.contentDiv.appendChild(currentMessageDiv);
+                  } else {
+                    // 일반 모드
+                    currentMessageDiv = addMessage("assistant", "");
+                  }
+                  currentText = "";
+                } else {
+                  // 최종 응답 종료
+                  if (currentMessageDiv && currentText) {
+                    updateMessage(currentMessageDiv, currentText);
+                  }
+                  currentMessageDiv = null;
                 }
-                currentMessageDiv = null;
               }
             } else if (type === "stream") {
-              if (currentMessageDiv && content) {
-                currentText += content;
+              if (mode === "result" && currentThinkingStep && content) {
+                // 사고 단계 내용 업데이트 (Markdown 포함)
+                const wrapper = currentThinkingStep.contentWrapper;
+                if (wrapper) {
+                  const p = currentThinkingStep.contentDiv;
+                  const currentMarkdownText = p.dataset.rawText || "";
+                  const newMarkdownText = currentMarkdownText + content;
+                  p.dataset.rawText = newMarkdownText;
 
+                  // Markdown 파싱 및 렌더링
+                  try {
+                    wrapper.innerHTML = marked.parse(newMarkdownText);
+                    wrapper.querySelectorAll("pre code").forEach((block) => {
+                      if (!block.dataset.highlighted) {
+                        hljs.highlightElement(block);
+                        block.dataset.highlighted = "yes";
+                      }
+                    });
+                  } catch (e) {
+                    console.error("Markdown parse error:", e);
+                    p.textContent = newMarkdownText;
+                  }
+                }
+                scrollToBottom();
+              } else if (mode === "basic" && currentMessageDiv && content) {
+                // 최종 응답 업데이트
+                currentText += content;
                 const now = Date.now();
                 if (now - lastUpdateTime > UPDATE_INTERVAL) {
                   updateMessage(currentMessageDiv, currentText);
