@@ -25,6 +25,10 @@ $ cd versatile
 
 #### Install Dependencies
 
+> [!WARNING]
+>
+> `llama-cpp-python` 설치 시 `Cuda Toolkit` 버전에 맞는 wheel 파일을 다운로드 받아서 설치해야 합니다.
+
 ```bash
 $ pip install -r requirements.txt
 ```
@@ -36,25 +40,38 @@ $ pip install -r requirements.txt
 
 #### Configure
 
-`agent.py` 에서 `ModelConfig` 클래스를 본인의 컴퓨터 사양에 맞게 수정해 주세요.
+1. `agent.py` 에서 `ModelConfig` 클래스를 본인의 컴퓨터 사양에 맞게 수정해 주세요.
 
-- cli 환경
-  - `cli.py` 에서 `main` 함수에 `model_path` 를 수정해 주세요.
+2. `.env` 파일을 생성하고 다음과 같이 작성해 주세요:
 
-- server 환경
-  - `server.py` 에서 `lifespan` 함수에 `model_path` 를 수정해 주세요.
+   ```env
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_USER=root
+   DB_PASSWORD=
+   DB_NAME=agent_db
+
+   API_HOST=0.0.0.0
+   API_PORT=8000
+
+   # 모델 경로
+   MODEL_PATH=./models/llama-3-Korean-Bllossom-8B/Q8_0.gguf
+
+   JWT_SECRET_KEY=<your-secret-key>
+   ```
 
 ---
 
 ### 🚀 Run
 
 ```bash
-# cli 환경
+# cli 환경 (no-auth)
 $ python cli.py
 
 # server 환경
 $ python server.py
 # client.html 파일을 열어주세요.
+# 데모 계정: demo, demo123
 ```
 
 ---
