@@ -206,7 +206,7 @@ class ThinkingProcessor:
         ]
 
         string_list_gbnf = r"""
-root   ::= "[" ws (string ("," ws string)*)? "]" ws
+root   ::= "[" ws (string ("," ws string){0,3})? "]" ws
 string ::= "\"" (
     [^"\\] | 
     "\\" (["\\/bfnrt] | "u" [0-9a-fA-F]{4})
