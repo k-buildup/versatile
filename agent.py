@@ -197,8 +197,8 @@ class ThinkingProcessor:
         self.llm = llm
         self.chat_history = chat_history
     
-    async def generate_todolist(self, user_message: str) -> tuple[List[str], List[OutputEvent]]:
-        """투두 리스트 생성"""
+    async def generate_todolist_stream(self, user_message: str) -> AsyncGenerator[tuple[OutputEvent, List[str]], None]:
+        """투두 리스트 생성 (스트리밍)"""
         messages = [
             SystemMessage(content=f"{PromptBuilder.DEFAULT_SYSTEM_PROMPT}\n\n{PromptBuilder.TODOLIST_PROMPT}"),
             *self.chat_history,
@@ -216,27 +216,34 @@ ws     ::= [ \t\n]
         list_grammar = LlamaGrammar.from_string(string_list_gbnf)
         chain = self.llm.bind(grammar=list_grammar)
         
-        events = []
-        events.append(OutputEvent(OutputMode.TODOLIST, "tag", is_start=True))
+        # TODOLIST 시작 태그
+        yield (OutputEvent(OutputMode.TODOLIST, "tag", is_start=True), [])
         
         full_response = ""
         
+        # 스트리밍으로 투두리스트 생성
         async for chunk in chain.astream(messages):
             text = chunk.content
-            events.append(OutputEvent(OutputMode.TODOLIST, "stream", text))
+            yield (OutputEvent(OutputMode.TODOLIST, "stream", text), [])
             full_response += text
         
-        events.append(OutputEvent(OutputMode.TODOLIST, "tag", is_start=False))
+        # TODOLIST 종료 태그
+        yield (OutputEvent(OutputMode.TODOLIST, "tag", is_start=False), [])
         
+        # JSON 파싱
         try:
             todolist = json.loads(full_response)
+
+            if len(todolist) == 0:
+                todolist = ["사용자가 원하는 내용 파악하기"]
         except json.JSONDecodeError:
-            todolist = []
+            todolist = ["사용자가 원하는 내용 파악하기"]
         
-        return todolist, events
+        # 최종적으로 파싱된 투두리스트 반환
+        yield (None, todolist)
     
-    async def process_todo_item(self, todo: str, user_message: str) -> tuple[str, List[OutputEvent]]:
-        """개별 투두 항목 처리"""
+    async def process_todo_item_stream(self, todo: str, user_message: str) -> AsyncGenerator[tuple[OutputEvent, str], None]:
+        """개별 투두 항목 처리 (스트리밍)"""
         system_prompt = PromptBuilder.THINK_STEP_PROMPT.format(todo=todo)
         messages = [
             SystemMessage(content=f"{PromptBuilder.DEFAULT_SYSTEM_PROMPT}\n\n{system_prompt}"),
@@ -244,40 +251,26 @@ ws     ::= [ \t\n]
             HumanMessage(content=user_message)
         ]
         
-        events = []
-        events.append(OutputEvent(OutputMode.TODO, "tag", todo, is_start=True))
-        events.append(OutputEvent(OutputMode.TODO, "tag", is_start=False))
-        events.append(OutputEvent(OutputMode.RESULT, "tag", is_start=True))
+        # TODO 시작 태그 (투두 내용 포함)
+        yield (OutputEvent(OutputMode.TODO, "tag", todo, is_start=True), "")
+        yield (OutputEvent(OutputMode.TODO, "tag", is_start=False), "")
+        
+        # RESULT 시작 태그
+        yield (OutputEvent(OutputMode.RESULT, "tag", is_start=True), "")
         
         full_response = ""
         
+        # 스트리밍으로 결과 생성
         async for chunk in self.llm.astream(messages, max_tokens=512):
             text = chunk.content
-            events.append(OutputEvent(OutputMode.RESULT, "stream", text))
+            yield (OutputEvent(OutputMode.RESULT, "stream", text), "")
             full_response += text
         
-        events.append(OutputEvent(OutputMode.RESULT, "tag", is_start=False))
+        # RESULT 종료 태그
+        yield (OutputEvent(OutputMode.RESULT, "tag", is_start=False), "")
         
-        return full_response.strip(), events
-    
-    async def execute_thinking(self, user_message: str) -> tuple[List[Dict[str, str]], List[OutputEvent]]:
-        """전체 사고 과정 실행"""
-        all_events = []
-        
-        todolist, todo_events = await self.generate_todolist(user_message)
-        all_events.extend(todo_events)
-        
-        thinking = []
-        all_events.append(OutputEvent(OutputMode.THINK, "tag", is_start=True))
-        
-        for todo in todolist:
-            result, events = await self.process_todo_item(todo.strip(), user_message)
-            all_events.extend(events)
-            thinking.append({'todo': todo, 'content': result})
-        
-        all_events.append(OutputEvent(OutputMode.THINK, "tag", is_start=False))
-        
-        return thinking, all_events
+        # 최종 결과 반환
+        yield (None, full_response.strip())
 
 
 # ============================================================================
@@ -306,6 +299,7 @@ class VersatileAgent:
             top_k=gen_config.top_k,
             repeat_penalty=gen_config.repeat_penalty,
             max_tokens=gen_config.max_tokens,
+            chat_format="llama-3"
         )
         
         self.sessions: Dict[str, List[BaseMessage]] = {}
@@ -398,15 +392,38 @@ class VersatileAgent:
         chat_history.append(AIMessage(content=final_response.strip()))
     
     async def think_and_answer_stream(self, user_message: str, session_id: str = "default") -> AsyncGenerator[OutputEvent, None]:
-        """사고 과정을 거친 답변 (스트리밍)"""
+        """사고 과정을 거친 답변 (실시간 스트리밍)"""
         chat_history = self.get_history(session_id)
         
         processor = ThinkingProcessor(self.llm, chat_history)
-        thinking, events = await processor.execute_thinking(user_message)
         
-        for event in events:
-            yield event
+        # 1단계: 투두리스트 생성 (실시간 스트리밍)
+        todolist = []
+        async for event, parsed_list in processor.generate_todolist_stream(user_message):
+            if event is not None:
+                yield event
+            else:
+                todolist = parsed_list
         
+        # 2단계: THINK 시작 태그
+        yield OutputEvent(OutputMode.THINK, "tag", is_start=True)
+        
+        # 3단계: 각 투두 항목 처리 (실시간 스트리밍)
+        thinking = []
+        for todo in todolist:
+            todo_result = ""
+            async for event, result in processor.process_todo_item_stream(todo.strip(), user_message):
+                if event is not None:
+                    yield event
+                else:
+                    todo_result = result
+            
+            thinking.append({'todo': todo, 'content': todo_result})
+        
+        # 4단계: THINK 종료 태그
+        yield OutputEvent(OutputMode.THINK, "tag", is_start=False)
+        
+        # 5단계: 최종 답변 생성
         thinking_text = "\n\n".join(
             f"{item['todo']}: {item['content']}" for item in thinking
         )
