@@ -5,377 +5,169 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Versatile — AI Chat</title>
 
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <!-- Marked.js for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
 
     <!-- Highlight.js for code syntax highlighting -->
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
     />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
-    <style>
-      :root {
-        --bg-primary: #f7f7f8;
-        --bg-secondary: #ffffff;
-        --bg-tertiary: #f4f4f5;
-        --bg-hover: #ebebeb;
-        --accent-primary: #ab6f00;
-        --text-primary: #2e2e2e;
-        --text-secondary: #6e6e7e;
-        --text-muted: #9e9e9e;
-        --border: #e0e0e0;
-        --shadow: rgba(0, 0, 0, 0.08);
-      }
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              dark: {
+                bg: "#1a1a1a",
+                sidebar: "#0f0f0f",
+                border: "#2a2a2a",
+                hover: "#252525",
+                text: "#e5e5e5",
+                "text-secondary": "#a0a0a0",
+              },
+            },
+          },
+        },
+      };
+    </script>
 
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
       body {
         font-family:
-          "Pretendard",
+          "Inter",
           -apple-system,
           BlinkMacSystemFont,
           "Segoe UI",
-          Roboto,
           sans-serif;
-        background: var(--bg-primary);
-        color: var(--text-primary);
-        height: 100vh;
-        overflow: hidden;
-        display: flex;
-        justify-content: center;
-        align-items: center;
       }
 
-      .container {
-        position: relative;
-        background: var(--bg-secondary);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        width: 95vw;
-        max-width: 1000px;
-        height: 92vh;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        box-shadow: 0 2px 12px var(--shadow);
-      }
-
-      /* Header */
-      .header {
-        padding: 16px 24px;
-        border-bottom: 1px solid var(--border);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: var(--bg-secondary);
-      }
-
-      .header-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .logo {
-        font-size: 20px;
-        font-weight: 600;
-        color: var(--text-primary);
-      }
-
-      .status {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        font-size: 12px;
-        color: var(--text-secondary);
-      }
-
-      .status-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #10a37f;
-      }
-
-      .status-dot.offline {
-        background: #ef4444;
-      }
-
-      /* Mode selector */
-      .mode-selector {
-        display: flex;
-        gap: 4px;
-        background: var(--bg-tertiary);
-        padding: 3px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-      }
-
-      .mode-btn {
-        padding: 6px 14px;
-        border: none;
-        background: transparent;
-        color: var(--text-secondary);
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 500;
-        font-size: 13px;
-        transition: all 0.2s;
-        font-family: inherit;
-      }
-
-      .mode-btn:hover {
-        background: var(--bg-hover);
-        color: var(--text-primary);
-      }
-
-      .mode-btn.active {
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      }
-
-      /* Chat container */
-      .chat-container {
-        flex: 1;
-        overflow-y: auto;
-        padding: 20px 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-
-      .chat-container::-webkit-scrollbar {
+      ::-webkit-scrollbar {
         width: 8px;
+        height: 8px;
       }
 
-      .chat-container::-webkit-scrollbar-track {
+      ::-webkit-scrollbar-track {
         background: transparent;
       }
 
-      .chat-container::-webkit-scrollbar-thumb {
-        background: var(--border);
+      ::-webkit-scrollbar-thumb {
+        background: #3a3a3a;
         border-radius: 4px;
       }
 
-      .chat-container::-webkit-scrollbar-thumb:hover {
-        background: #ccc;
+      ::-webkit-scrollbar-thumb:hover {
+        background: #4a4a4a;
       }
 
-      /* Messages */
-      .message {
-        display: flex;
-        gap: 12px;
-        max-width: 100%;
-      }
-
-      .message.user {
-        flex-direction: row-reverse;
-      }
-
-      .message-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        flex-shrink: 0;
-        background: var(--bg-tertiary);
-        color: var(--text-secondary);
-        margin-top: 8px;
-      }
-
-      .message.user .message-avatar {
-        background: var(--accent-primary);
-        color: white;
-      }
-
-      .message-content {
-        flex: 1;
-        max-width: 85%;
-        padding: 12px 16px;
-        border-radius: 6px;
-        line-height: 1.6;
-        font-size: 14px;
-      }
-
-      .message.user .message-content {
-        background: var(--bg-tertiary);
-        color: var(--text-primary);
-      }
-
-      .message.assistant .message-content {
-        background: transparent;
-        color: var(--text-primary);
-        padding-left: 0;
-      }
-
-      .message.system {
-        display: none;
-      }
-
-      .message.system .message-content {
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border);
-        color: var(--text-secondary);
-        font-size: 12px;
-        padding: 8px 12px;
-      }
-
-      /* Tag styling */
-      .tag {
-        font-family: "Menlo", "Monaco", monospace;
-        font-size: 11px;
-        color: var(--text-muted);
-        padding: 4px 8px;
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border);
-        border-radius: 4px;
-        display: inline-block;
-      }
-
-      /* Markdown styling */
-      .message-content h1,
-      .message-content h2,
-      .message-content h3 {
-        margin-top: 1em;
+      .markdown-content h1,
+      .markdown-content h2,
+      .markdown-content h3 {
+        margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
-        color: var(--text-primary);
       }
 
-      .message-content h1 {
-        font-size: 1.4em;
+      .markdown-content h1 {
+        font-size: 1.5em;
       }
-      .message-content h2 {
-        font-size: 1.2em;
+      .markdown-content h2 {
+        font-size: 1.3em;
       }
-      .message-content h3 {
-        font-size: 1.05em;
-      }
-
-      .message-content p {
-        margin-bottom: 0.8em;
+      .markdown-content h3 {
+        font-size: 1.1em;
       }
 
-      .message-content p:last-child {
-        margin-bottom: 0;
+      .markdown-content p {
+        margin-bottom: 1em;
+        line-height: 1.7;
       }
 
-      .message-content ul,
-      .message-content ol {
+      .markdown-content ul,
+      .markdown-content ol {
         margin-left: 1.5em;
-        margin-bottom: 0.8em;
+        margin-bottom: 1em;
       }
 
-      .message-content li {
+      .markdown-content li {
         margin-bottom: 0.3em;
       }
 
-      .message-content code {
-        font-family:
-          "Consolas", "Courier New", monospace, "Fira Code", "G마켓 산스 Medium";
-        font-size: 0.9em;
+      .markdown-content code {
+        font-family: "Consolas", "Monaco", "Courier New", monospace;
+        font-size: 0.875em;
         padding: 2px 6px;
         border-radius: 3px;
-        background: var(--bg-tertiary);
-        color: var(--text-primary);
+        background: #2a2a2a;
+        color: #e5e5e5;
       }
 
-      .message-content pre {
+      .markdown-content pre {
         margin: 1em 0;
         border-radius: 6px;
         overflow: hidden;
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border);
+        background: #1e1e1e;
+        border: 1px solid #2a2a2a;
       }
 
-      .message-content pre code {
+      .markdown-content pre code {
         display: block;
         padding: 16px;
         overflow-x: auto;
         background: transparent;
-        font-size: 13px;
+        font-size: 0.875em;
         line-height: 1.5;
       }
 
-      .message-content blockquote {
-        border-left: 3px solid var(--border);
+      .markdown-content blockquote {
+        border-left: 3px solid #3a3a3a;
         padding-left: 16px;
         margin: 1em 0;
-        color: var(--text-secondary);
+        color: #a0a0a0;
       }
 
-      .message-content a {
-        color: var(--accent-primary);
+      .markdown-content a {
+        color: oklch(76.9% 0.188 70.08);
         text-decoration: none;
       }
 
-      .message-content a:hover {
+      .markdown-content a:hover {
         text-decoration: underline;
       }
 
-      .message-content table {
+      .markdown-content table {
         width: 100%;
         border-collapse: collapse;
         margin: 1em 0;
       }
 
-      .message-content th,
-      .message-content td {
-        border: 1px solid var(--border);
+      .markdown-content th,
+      .markdown-content td {
+        border: 1px solid #2a2a2a;
         padding: 8px 12px;
         text-align: left;
       }
 
-      .message-content th {
-        background: var(--bg-tertiary);
+      .markdown-content th {
+        background: #252525;
         font-weight: 600;
       }
 
-      /* Typing indicator */
-      .typing-indicator {
-        display: none;
-        gap: 12px;
-      }
-
-      .typing-indicator.active {
-        display: flex;
-      }
-
-      .typing-dots {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        padding: 12px 16px;
-      }
-
-      .typing-dot {
-        width: 6px;
-        height: 6px;
-        background: var(--text-muted);
-        border-radius: 50%;
-        animation: typingBounce 1.4s ease-in-out infinite;
-      }
-
-      .typing-dot:nth-child(2) {
-        animation-delay: 0.2s;
-      }
-
-      .typing-dot:nth-child(3) {
-        animation-delay: 0.4s;
+      .markdown-content hr {
+        border: none;
+        border-top: 1px solid #3a3a3a;
+        margin: 1em 0;
       }
 
       @keyframes typingBounce {
@@ -389,191 +181,367 @@
         }
       }
 
-      /* Input container */
-      .input-container {
-        padding: 16px 24px;
-        border-top: 1px solid var(--border);
-        background: var(--bg-secondary);
+      .typing-dot {
+        animation: typingBounce 1.4s ease-in-out infinite;
       }
 
-      .input-wrapper {
-        display: flex;
-        gap: 8px;
-        align-items: stretch;
+      .typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
       }
 
-      #messageInput {
-        flex: 1;
-        padding: 10px 14px;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        font-size: 14px;
-        outline: none;
-        transition: border-color 0.2s;
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-        font-family: inherit;
-        resize: none;
-        min-height: 44px;
-        max-height: 120px;
-        line-height: 1.5;
+      .typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
       }
 
-      #messageInput:focus {
-        border-color: var(--accent-primary);
+      .session-active {
+        background-color: #252525;
+        border-left: 2px solid #8b7355;
       }
 
-      #messageInput::placeholder {
-        color: var(--text-muted);
-      }
-
-      .btn {
-        padding: 10px 18px;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 500;
-        font-size: 14px;
-        transition: all 0.2s;
-        font-family: inherit;
-        max-height: 44px;
-      }
-
-      .btn-primary {
-        background: var(--accent-primary);
-        color: white;
-      }
-
-      .btn-primary:hover:not(:disabled) {
-        opacity: 0.9;
-      }
-
-      .btn-primary:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      .btn-secondary {
-        background: var(--bg-tertiary);
-        color: var(--text-primary);
-        border: 1px solid var(--border);
-      }
-
-      .btn-secondary:hover {
-        background: var(--bg-hover);
-      }
-
-      /* Welcome screen */
-      .welcome {
-        display: flex;
-        flex-direction: column;
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
         align-items: center;
         justify-content: center;
-        text-align: center;
-        padding: 40px 24px;
-        gap: 20px;
-        color: var(--text-secondary);
       }
 
-      .welcome-title {
-        font-size: 24px;
-        font-weight: 600;
-        color: var(--text-primary);
-      }
-
-      .welcome-text {
-        font-size: 14px;
-        max-width: 500px;
-        line-height: 1.6;
-      }
-
-      /* Responsive */
-      @media (max-width: 768px) {
-        .container {
-          width: 100vw;
-          height: 100vh;
-          border-radius: 0;
-        }
-
-        .header {
-          padding: 12px 16px;
-          flex-wrap: wrap;
-          gap: 8px;
-        }
-
-        .header-left {
-          width: 100%;
-        }
-
-        .mode-selector {
-          width: 100%;
-        }
-
-        .chat-container {
-          padding: 16px;
-        }
-
-        .input-container {
-          padding: 12px 16px;
-        }
+      .modal.active {
+        display: flex;
       }
     </style>
   </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <div class="header-left">
-          <div class="logo">Versatile</div>
-          <div class="status">
-            <span class="status-dot" id="statusDot"></span>
-            <span id="statusText">Connecting...</span>
+  <body class="bg-dark-bg text-dark-text dark">
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal active">
+      <div
+        class="bg-dark-sidebar border border-dark-border rounded-xl p-8 max-w-md w-full mx-4"
+      >
+        <div class="text-center mb-6">
+          <div
+            class="w-16 h-16 mx-auto bg-dark-hover rounded-full flex items-center justify-center mb-4"
+          >
+            <i data-lucide="message-circle" class="w-8 h-8"></i>
+          </div>
+          <h2 class="text-2xl font-semibold mb-2">Versatile</h2>
+          <p class="text-dark-text-secondary">로그인하여 시작하세요</p>
+        </div>
+
+        <div id="loginForm">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm mb-2">사용자명</label>
+              <input
+                type="text"
+                id="loginUsername"
+                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
+                placeholder="username"
+              />
+            </div>
+            <div>
+              <label class="block text-sm mb-2">비밀번호</label>
+              <input
+                type="password"
+                id="loginPassword"
+                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
+                placeholder="••••••••"
+              />
+            </div>
+            <button
+              id="loginBtn"
+              class="w-full px-4 py-2 bg-dark-text text-dark-bg rounded-lg hover:bg-dark-text/90 transition-colors font-medium"
+            >
+              로그인
+            </button>
+          </div>
+          <div class="mt-4 text-center text-sm">
+            <span class="text-dark-text-secondary">계정이 없으신가요?</span>
+            <button
+              id="showRegisterBtn"
+              class="text-dark-text hover:underline ml-1"
+            >
+              회원가입
+            </button>
           </div>
         </div>
-        <div class="mode-selector">
-          <button class="mode-btn active" data-mode="chat">Chat</button>
-          <button class="mode-btn" data-mode="tool">Tool</button>
-          <button class="mode-btn" data-mode="think">Think</button>
+
+        <div id="registerForm" class="hidden">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm mb-2">사용자명</label>
+              <input
+                type="text"
+                id="registerUsername"
+                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
+                placeholder="username"
+              />
+            </div>
+            <div>
+              <label class="block text-sm mb-2">이메일</label>
+              <input
+                type="email"
+                id="registerEmail"
+                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
+                placeholder="email@example.com"
+              />
+            </div>
+            <div>
+              <label class="block text-sm mb-2">표시 이름</label>
+              <input
+                type="text"
+                id="registerDisplayName"
+                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
+                placeholder="표시될 이름"
+              />
+            </div>
+            <div>
+              <label class="block text-sm mb-2">비밀번호</label>
+              <input
+                type="password"
+                id="registerPassword"
+                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
+                placeholder="••••••••"
+              />
+            </div>
+            <button
+              id="registerBtn"
+              class="w-full px-4 py-2 bg-dark-text text-dark-bg rounded-lg hover:bg-dark-text/90 transition-colors font-medium"
+            >
+              회원가입
+            </button>
+          </div>
+          <div class="mt-4 text-center text-sm">
+            <span class="text-dark-text-secondary"
+              >이미 계정이 있으신가요?</span
+            >
+            <button
+              id="showLoginBtn"
+              class="text-dark-text hover:underline ml-1"
+            >
+              로그인
+            </button>
+          </div>
+        </div>
+
+        <div
+          id="authError"
+          class="hidden mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden flex h-screen overflow-hidden">
+      <!-- Sidebar -->
+      <div
+        class="w-64 bg-dark-sidebar border-r border-dark-border flex flex-col"
+      >
+        <!-- Logo -->
+        <div class="p-4 border-b border-dark-border">
+          <div class="flex items-center gap-2">
+            <i data-lucide="message-circle" class="w-5 h-5"></i>
+            <span class="text-lg font-semibold">Versatile</span>
+          </div>
+        </div>
+
+        <!-- New Chat Button -->
+        <div class="p-3">
+          <button
+            id="newChatBtn"
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dark-hover transition-colors"
+          >
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span class="text-sm">새 채팅</span>
+          </button>
+        </div>
+
+        <!-- Chat History -->
+        <div class="flex-1 overflow-y-auto px-3 space-y-1">
+          <div class="text-xs text-dark-text-secondary px-3 py-2 font-medium">
+            최근 항목
+          </div>
+          <div id="chatHistory">
+            <!-- Chat history items will be added here -->
+          </div>
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="border-t border-dark-border p-3">
+          <button
+            id="userMenuBtn"
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dark-hover transition-colors text-sm"
+          >
+            <i data-lucide="user" class="w-4 h-4"></i>
+            <span id="userDisplayName">User</span>
+            <i data-lucide="chevron-down" class="w-4 h-4 ml-auto"></i>
+          </button>
+          <button
+            id="logoutBtn"
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dark-hover transition-colors text-sm mt-2 text-red-400"
+          >
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+            <span>로그아웃</span>
+          </button>
         </div>
       </div>
 
-      <div class="chat-container" id="chatContainer">
-        <div class="welcome">
-          <div class="welcome-title">Welcome to Versatile</div>
-          <div class="welcome-text">
-            Start a conversation by typing a message below. Choose a mode (Chat,
-            Tool, or Think) to get started.
+      <!-- Main Content -->
+      <div class="flex-1 flex flex-col">
+        <!-- Header -->
+        <div class="border-b border-dark-border p-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <button
+                id="sidebarToggle"
+                class="lg:hidden p-2 hover:bg-dark-hover rounded-lg"
+              >
+                <i data-lucide="menu" class="w-5 h-5"></i>
+              </button>
+              <h1 class="text-lg font-semibold" id="chatTitle">새 채팅</h1>
+            </div>
+            <div class="flex items-center gap-2">
+              <!-- Status Indicator -->
+              <div
+                class="flex items-center gap-2 px-3 py-1.5 bg-dark-hover border border-dark-border rounded-full"
+              >
+                <div
+                  class="w-2 h-2 rounded-full bg-green-500"
+                  id="statusDot"
+                ></div>
+                <span class="text-xs text-dark-text-secondary" id="statusText"
+                  >Connected</span
+                >
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="message typing-indicator">
-          <div class="message-avatar">AI</div>
-          <div class="typing-dots">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
+        <!-- Chat Container -->
+        <div
+          id="chatContainer"
+          class="flex-1 overflow-y-auto px-6 py-6 space-y-6"
+        >
+          <!-- Welcome Message -->
+          <div
+            id="welcomeMessage"
+            class="flex flex-col items-center justify-center h-full text-center"
+          >
+            <div class="max-w-md space-y-4">
+              <div
+                class="w-16 h-16 mx-auto bg-dark-hover rounded-full flex items-center justify-center"
+              >
+                <i
+                  data-lucide="sparkles"
+                  class="w-8 h-8 text-dark-text-secondary"
+                ></i>
+              </div>
+              <h2 class="text-2xl font-semibold">
+                Versatile에 오신 것을 환영합니다
+              </h2>
+              <p class="text-dark-text-secondary">
+                아래에 메시지를 입력하여 대화를 시작하세요.<br />
+                Chat, Tool, Think 모드 중 하나를 선택할 수 있습니다.
+              </p>
+            </div>
+          </div>
+
+          <!-- Typing Indicator -->
+          <div id="typingIndicator" class="hidden">
+            <div class="flex gap-4 max-w-3xl m-[0_auto]">
+              <div
+                class="w-8 h-8 rounded-full bg-dark-hover flex items-center justify-center flex-shrink-0"
+              >
+                <i data-lucide="bot" class="w-4 h-4"></i>
+              </div>
+              <div class="flex items-center gap-1 py-3">
+                <div
+                  class="typing-dot w-2 h-2 bg-dark-text-secondary rounded-full"
+                ></div>
+                <div
+                  class="typing-dot w-2 h-2 bg-dark-text-secondary rounded-full"
+                ></div>
+                <div
+                  class="typing-dot w-2 h-2 bg-dark-text-secondary rounded-full"
+                ></div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="input-container">
-        <div class="input-wrapper">
-          <textarea
-            id="messageInput"
-            placeholder="Message Versatile..."
-            rows="1"
-          ></textarea>
-          <button class="btn btn-primary" id="sendBtn">Send</button>
-          <button class="btn btn-secondary" id="clearBtn">Clear</button>
+        <!-- Input Container -->
+        <div class="border-t border-dark-border p-4">
+          <div class="max-w-3xl mx-auto">
+            <div class="flex gap-2">
+              <button
+                class="mode-btn size-[48px] px-4 py-2 bg-dark-text/5 text-dark-text rounded-xl hover:bg-dark-text/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                data-mode="chat"
+              >
+                <i data-lucide="message-circle" class="w-4 h-4"></i>
+              </button>
+              <button
+                class="mode-btn size-[48px] px-4 py-2 bg-dark-text/5 text-dark-text rounded-xl hover:bg-dark-text/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                data-mode="tool"
+              >
+                <i data-lucide="pickaxe" class="w-4 h-4"></i>
+              </button>
+              <button
+                class="mode-btn size-[48px] px-4 py-2 bg-dark-text/5 text-dark-text rounded-xl hover:bg-dark-text/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                data-mode="think"
+              >
+                <i data-lucide="sparkle" class="w-4 h-4"></i>
+              </button>
+              <div class="flex-1 relative">
+                <textarea
+                  id="messageInput"
+                  placeholder="메시지를 입력하세요..."
+                  rows="1"
+                  class="min-h-[48px] w-full px-4 py-3 bg-dark-hover border border-dark-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30 text-sm"
+                  style="max-height: 200px"
+                ></textarea>
+              </div>
+              <button
+                id="sendBtn"
+                class="size-[48px] px-4 py-2 bg-dark-text text-dark-bg rounded-xl hover:bg-dark-text/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <i data-lucide="send" class="w-4 h-4"></i>
+              </button>
+            </div>
+            <div class="flex items-center justify-between mt-2 px-2">
+              <div class="text-xs text-dark-text-secondary">
+                <span id="charCount">0</span> characters
+              </div>
+              <button
+                id="clearBtn"
+                class="text-xs text-dark-text-secondary hover:text-dark-text transition-colors flex items-center gap-1"
+              >
+                <i data-lucide="trash-2" class="w-3 h-3"></i>
+                Clear chat
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <script>
+      // Initialize Lucide icons
+      lucide.createIcons();
+
       // Configuration
       const API_URL = "http://localhost:8000";
+      let authToken = localStorage.getItem("authToken") || null;
+      let currentUser = JSON.parse(
+        localStorage.getItem("currentUser") || "null",
+      );
+      let currentSessionId = null;
       let currentMode = "chat";
-      let sessionId = "web_" + Date.now();
       let isProcessing = false;
+      let sessions = [];
 
       // Configure marked.js
       marked.setOptions({
@@ -592,29 +560,252 @@
       });
 
       // DOM elements
+      const loginModal = document.getElementById("loginModal");
+      const mainApp = document.getElementById("mainApp");
+      const loginForm = document.getElementById("loginForm");
+      const registerForm = document.getElementById("registerForm");
+      const authError = document.getElementById("authError");
+
       const chatContainer = document.getElementById("chatContainer");
       const messageInput = document.getElementById("messageInput");
       const sendBtn = document.getElementById("sendBtn");
       const clearBtn = document.getElementById("clearBtn");
+      const newChatBtn = document.getElementById("newChatBtn");
+      const logoutBtn = document.getElementById("logoutBtn");
       const statusText = document.getElementById("statusText");
       const statusDot = document.getElementById("statusDot");
+      const charCount = document.getElementById("charCount");
       const modeBtns = document.querySelectorAll(".mode-btn");
-      const typingIndicator = document.querySelector(".typing-indicator");
+      const typingIndicator = document.getElementById("typingIndicator");
+      const welcomeMessage = document.getElementById("welcomeMessage");
+      const chatHistory = document.getElementById("chatHistory");
+      const chatTitle = document.getElementById("chatTitle");
+      const userDisplayName = document.getElementById("userDisplayName");
+
+      // Auth Functions
+      function showAuthError(message) {
+        authError.textContent = message;
+        authError.classList.remove("hidden");
+        setTimeout(() => authError.classList.add("hidden"), 5000);
+      }
+
+      async function login(username, password) {
+        try {
+          const response = await fetch(`${API_URL}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "로그인 실패");
+          }
+
+          const data = await response.json();
+          authToken = data.access_token;
+          currentUser = data.user;
+
+          localStorage.setItem("authToken", authToken);
+          localStorage.setItem("currentUser", JSON.stringify(currentUser));
+
+          showMainApp();
+        } catch (error) {
+          showAuthError(error.message);
+        }
+      }
+
+      async function register(username, email, password, displayName) {
+        try {
+          const response = await fetch(`${API_URL}/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username,
+              email,
+              password,
+              display_name: displayName || username,
+            }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "회원가입 실패");
+          }
+
+          const data = await response.json();
+          authToken = data.access_token;
+          currentUser = data.user;
+
+          localStorage.setItem("authToken", authToken);
+          localStorage.setItem("currentUser", JSON.stringify(currentUser));
+
+          showMainApp();
+        } catch (error) {
+          showAuthError(error.message);
+        }
+      }
+
+      function logout() {
+        authToken = null;
+        currentUser = null;
+        currentSessionId = null;
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("currentUser");
+        loginModal.classList.add("active");
+        mainApp.classList.add("hidden");
+      }
+
+      function showMainApp() {
+        loginModal.classList.remove("active");
+        mainApp.classList.remove("hidden");
+        userDisplayName.textContent =
+          currentUser.display_name || currentUser.username;
+        loadSessions();
+        lucide.createIcons();
+      }
+
+      // Auth Event Listeners
+      document.getElementById("loginBtn").addEventListener("click", () => {
+        const username = document.getElementById("loginUsername").value.trim();
+        const password = document.getElementById("loginPassword").value;
+        if (username && password) {
+          login(username, password);
+        }
+      });
+
+      document.getElementById("registerBtn").addEventListener("click", () => {
+        const username = document
+          .getElementById("registerUsername")
+          .value.trim();
+        const email = document.getElementById("registerEmail").value.trim();
+        const password = document.getElementById("registerPassword").value;
+        const displayName = document
+          .getElementById("registerDisplayName")
+          .value.trim();
+
+        if (username && email && password) {
+          register(username, email, password, displayName);
+        }
+      });
+
+      document
+        .getElementById("showRegisterBtn")
+        .addEventListener("click", () => {
+          loginForm.classList.add("hidden");
+          registerForm.classList.remove("hidden");
+          authError.classList.add("hidden");
+        });
+
+      document.getElementById("showLoginBtn").addEventListener("click", () => {
+        registerForm.classList.add("hidden");
+        loginForm.classList.remove("hidden");
+        authError.classList.add("hidden");
+      });
+
+      logoutBtn.addEventListener("click", logout);
+
+      // Session Management
+      async function loadSessions() {
+        try {
+          const response = await fetch(`${API_URL}/sessions`, {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          });
+
+          if (!response.ok) throw new Error("세션 로드 실패");
+
+          sessions = await response.json();
+          renderChatHistory();
+        } catch (error) {
+          console.error("Load sessions error:", error);
+        }
+      }
+
+      async function createNewSession() {
+        if (isProcessing) return;
+
+        currentSessionId = null;
+        clearChat();
+        chatTitle.textContent = "새 채팅";
+        renderChatHistory();
+      }
+
+      async function switchSession(sessionId, title) {
+        if (isProcessing) return;
+
+        currentSessionId = sessionId;
+        chatTitle.textContent = title;
+        clearChat();
+        await loadSessionHistory(sessionId);
+        renderChatHistory();
+      }
+
+      async function loadSessionHistory(sessionId) {
+        try {
+          const response = await fetch(`${API_URL}/history/${sessionId}`, {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          });
+
+          if (!response.ok) return;
+
+          const data = await response.json();
+
+          if (data.history && data.history.length > 0) {
+            data.history.forEach((msg) => {
+              addMessage(msg.role, msg.content, msg.role === "assistant");
+            });
+          }
+        } catch (error) {
+          console.error("Load history error:", error);
+        }
+      }
+
+      function renderChatHistory() {
+        chatHistory.innerHTML = "";
+
+        sessions.forEach((session) => {
+          const historyItem = document.createElement("button");
+          historyItem.className =
+            "w-full text-left px-3 py-2 rounded-lg hover:bg-dark-hover transition-colors text-sm truncate";
+
+          if (session.session_id === currentSessionId) {
+            historyItem.classList.add("session-active");
+          }
+
+          historyItem.textContent = session.title;
+          historyItem.onclick = () => {
+            switchSession(session.session_id, session.title);
+          };
+
+          chatHistory.appendChild(historyItem);
+        });
+
+        lucide.createIcons();
+      }
 
       // Auto-resize textarea
       messageInput.addEventListener("input", function () {
         this.style.height = "auto";
-        this.style.height = Math.min(this.scrollHeight, 120) + "px";
+        this.style.height = Math.min(this.scrollHeight, 200) + "px";
+        charCount.textContent = this.value.length;
       });
 
       // Mode selection
       modeBtns.forEach((btn) => {
         btn.addEventListener("click", () => {
           if (isProcessing) return;
-          modeBtns.forEach((b) => b.classList.remove("active"));
-          btn.classList.add("active");
+          modeBtns.forEach((b) => {
+            b.classList.remove("bg-dark-text/10");
+            b.classList.add("hover:bg-dark-text/10");
+          });
+          btn.classList.add("bg-dark-text/10");
+          btn.classList.remove("hover:bg-dark-text/10");
           currentMode = btn.dataset.mode;
-          addSystemMessage(`Mode changed to: ${currentMode}`);
+          addSystemMessage(`모드 변경: ${currentMode}`);
         });
       });
 
@@ -627,99 +818,121 @@
         }
       });
 
+      // New chat
+      newChatBtn.addEventListener("click", createNewSession);
+
       // Clear chat
       clearBtn.addEventListener("click", async () => {
-        if (isProcessing) return;
+        if (isProcessing || !currentSessionId) return;
 
         try {
           const response = await fetch(`${API_URL}/clear`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ session_id: sessionId }),
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({ session_id: currentSessionId }),
           });
 
           if (response.ok) {
-            const messages = chatContainer.querySelectorAll(
-              ".message:not(.typing-indicator)",
-            );
-            messages.forEach((msg) => msg.remove());
-            addSystemMessage("Chat history cleared");
+            clearChat();
+            addSystemMessage("대화 기록이 삭제되었습니다");
           }
         } catch (error) {
           console.error("Clear error:", error);
-          addSystemMessage("Error clearing chat: " + error.message);
+          addSystemMessage("오류: " + error.message);
         }
       });
 
+      function clearChat() {
+        const messages = chatContainer.querySelectorAll(
+          ".message-item, .system-message",
+        );
+        messages.forEach((msg) => msg.remove());
+        welcomeMessage.classList.remove("hidden");
+      }
+
       // Message functions
       function addMessage(role, content, isMarkdown = false) {
-        const welcome = chatContainer.querySelector(".welcome");
-        if (welcome) welcome.remove();
+        welcomeMessage.classList.add("hidden");
 
+        // [변경됨] 사용자 메시지 오른쪽 정렬 로직(ml-auto, flex-row-reverse) 제거
+        // 이제 role에 관계없이 모든 메시지가 왼쪽 정렬(기본값)됩니다.
         const messageDiv = document.createElement("div");
-        messageDiv.className = `message ${role}`;
+        messageDiv.className = "message-item flex gap-4 max-w-3xl m-[0_auto]";
 
         const avatar = document.createElement("div");
-        avatar.className = "message-avatar";
-        avatar.textContent = role === "user" ? "You" : "AI";
+        avatar.className =
+          "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0";
+
+        // 프로필 아이콘 색상으로 화자 구분 (User: Amber, AI: Dark Hover)
+        if (role === "user") {
+          avatar.className += " bg-amber-700 text-white";
+          avatar.innerHTML = '<i data-lucide="user" class="w-4 h-4"></i>';
+        } else {
+          avatar.className += " bg-dark-hover";
+          avatar.innerHTML = '<i data-lucide="bot" class="w-4 h-4"></i>';
+        }
 
         const contentDiv = document.createElement("div");
-        contentDiv.className = "message-content";
+        contentDiv.className = "flex-1 space-y-2";
+
+        const messageContent = document.createElement("div");
+        messageContent.className = "prose prose-invert max-w-none";
+
+        if (role === "user") {
+          // [변경됨] 말풍선 스타일 조정
+          // 1. rounded-tr-sm -> rounded-tl-sm: 꼬리 방향을 왼쪽(프로필 쪽)으로 변경
+          // 2. 배경색(bg-dark-hover)은 유지하여 AI 메시지(배경 없음)와 시각적 구분
+          messageContent.className +=
+            " bg-dark-hover px-4 py-3 rounded-2xl rounded-tl-sm";
+        } else {
+          messageContent.className += " markdown-content mt-[3px]";
+        }
 
         if (isMarkdown && role === "assistant") {
-          contentDiv.innerHTML = marked.parse(content);
-          contentDiv.querySelectorAll("pre code").forEach((block) => {
+          messageContent.innerHTML = marked.parse(content);
+          messageContent.querySelectorAll("pre code").forEach((block) => {
             hljs.highlightElement(block);
           });
         } else {
-          contentDiv.textContent = content;
+          messageContent.textContent = content;
         }
 
+        contentDiv.appendChild(messageContent);
         messageDiv.appendChild(avatar);
         messageDiv.appendChild(contentDiv);
 
         chatContainer.insertBefore(messageDiv, typingIndicator);
+        lucide.createIcons();
         scrollToBottom();
 
-        return contentDiv;
+        return messageContent;
       }
 
-      function addSystemMessage(content, isTag = false) {
+      function addSystemMessage(content) {
         const messageDiv = document.createElement("div");
-        messageDiv.className = "message system";
-
-        const avatar = document.createElement("div");
-        avatar.className = "message-avatar";
-        avatar.textContent = "•";
+        messageDiv.className =
+          "system-message flex items-center justify-center py-2";
 
         const contentDiv = document.createElement("div");
-        contentDiv.className = "message-content";
+        contentDiv.className =
+          "text-xs text-dark-text-secondary bg-dark-hover px-3 py-1.5 rounded-full border border-dark-border";
+        contentDiv.textContent = content;
 
-        if (isTag) {
-          const tag = document.createElement("span");
-          tag.className = "tag";
-          tag.textContent = content;
-          contentDiv.appendChild(tag);
-        } else {
-          contentDiv.textContent = content;
-        }
-
-        messageDiv.appendChild(avatar);
         messageDiv.appendChild(contentDiv);
-
         chatContainer.insertBefore(messageDiv, typingIndicator);
         scrollToBottom();
-
-        return contentDiv;
       }
 
       function showTyping() {
-        typingIndicator.classList.add("active");
+        typingIndicator.classList.remove("hidden");
         scrollToBottom();
       }
 
       function hideTyping() {
-        typingIndicator.classList.remove("active");
+        typingIndicator.classList.add("hidden");
       }
 
       function scrollToBottom() {
@@ -734,8 +947,10 @@
 
         console.log("Sending message:", message);
         addMessage("user", message);
+
         messageInput.value = "";
         messageInput.style.height = "auto";
+        charCount.textContent = "0";
 
         isProcessing = true;
         sendBtn.disabled = true;
@@ -744,10 +959,13 @@
         try {
           const response = await fetch(`${API_URL}/chat`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
             body: JSON.stringify({
               message: message,
-              session_id: sessionId,
+              session_id: currentSessionId,
               mode: currentMode,
             }),
           });
@@ -764,7 +982,7 @@
           let currentText = "";
           let buffer = "";
           let lastUpdateTime = 0;
-          const UPDATE_INTERVAL = 30; // 30ms마다 업데이트
+          const UPDATE_INTERVAL = 30;
 
           while (true) {
             const { value, done } = await reader.read();
@@ -780,7 +998,6 @@
 
                 if (data === "[DONE]") {
                   console.log("Stream completed");
-                  // 마지막 업데이트
                   if (currentMessageDiv && currentText) {
                     updateMessage(currentMessageDiv, currentText);
                   }
@@ -789,7 +1006,6 @@
 
                 try {
                   const event = JSON.parse(data);
-                  console.log("Event received:", event);
                   handleEvent(event);
                 } catch (e) {
                   console.error("Parse error:", e, "Data:", data);
@@ -799,66 +1015,39 @@
           }
 
           function handleEvent(event) {
-            const { type, mode, content, is_start } = event;
+            const { type, mode, content, is_start, session_id } = event;
 
-            console.log("Handling event:", {
-              type,
-              mode,
-              content: content?.substring(0, 50),
-              is_start,
-            });
+            if (type === "session_created") {
+              currentSessionId = session_id;
+              loadSessions();
+              return;
+            }
 
-            // 태그 이벤트 처리
             if (type === "tag") {
               if (is_start) {
-                const tagText = content
-                  ? `<|start(@${mode})|>${content}`
-                  : `<|start(@${mode})|>`;
-                addSystemMessage(tagText, true);
-
-                // basic이나 result 모드에서 새 메시지 생성
                 if (mode === "basic" || mode === "result") {
                   currentMessageDiv = addMessage("assistant", "");
                   currentText = "";
-                  console.log("Created new message div for mode:", mode);
                 }
               } else {
-                const tagText = `<|end(@${mode})|>`;
-                addSystemMessage(tagText, true);
-
-                // 종료 태그에서 마지막 업데이트
                 if (currentMessageDiv && currentText) {
                   updateMessage(currentMessageDiv, currentText);
-                  console.log(
-                    "Final update on end tag, text length:",
-                    currentText.length,
-                  );
                 }
                 currentMessageDiv = null;
               }
-            }
-            // 스트림 이벤트 처리
-            else if (type === "stream") {
+            } else if (type === "stream") {
               if (currentMessageDiv && content) {
                 currentText += content;
 
-                // 스로틀링으로 업데이트 빈도 조절
                 const now = Date.now();
                 if (now - lastUpdateTime > UPDATE_INTERVAL) {
                   updateMessage(currentMessageDiv, currentText);
                   lastUpdateTime = now;
                 }
-              } else {
-                console.warn("Stream event but no message div:", {
-                  hasDiv: !!currentMessageDiv,
-                  content,
-                });
               }
-            }
-            // 에러 이벤트 처리
-            else if (type === "error") {
+            } else if (type === "error") {
               hideTyping();
-              addSystemMessage("Error: " + (event.message || "Unknown error"));
+              addSystemMessage("오류: " + (event.message || "Unknown error"));
               console.error("Server error:", event);
             }
           }
@@ -875,13 +1064,13 @@
               scrollToBottom();
             } catch (e) {
               console.error("Update message error:", e);
-              div.textContent = text; // Fallback to plain text
+              div.textContent = text;
             }
           }
         } catch (error) {
           console.error("Send message error:", error);
           hideTyping();
-          addSystemMessage("Error: " + error.message);
+          addSystemMessage("오류: " + error.message);
         } finally {
           isProcessing = false;
           sendBtn.disabled = false;
@@ -897,25 +1086,32 @@
 
           const data = await response.json();
           statusText.textContent = "Connected";
-          statusDot.classList.remove("offline");
+          statusDot.classList.remove("bg-red-500");
+          statusDot.classList.add("bg-green-500");
           console.log("Server status:", data);
         } catch (error) {
           statusText.textContent = "Offline";
-          statusDot.classList.add("offline");
-          addSystemMessage(
-            "⚠️ Server offline. Please start the API server with: python server_app.py",
-          );
+          statusDot.classList.remove("bg-green-500");
+          statusDot.classList.add("bg-red-500");
           console.error("Server check failed:", error);
         }
       }
 
       // Initialize
-      checkServer();
-      messageInput.focus();
+      function init() {
+        checkServer();
 
-      console.log("Versatile Chat initialized");
-      console.log("API URL:", API_URL);
-      console.log("Session ID:", sessionId);
+        if (authToken && currentUser) {
+          showMainApp();
+        } else {
+          loginModal.classList.add("active");
+        }
+
+        lucide.createIcons();
+        console.log("Versatile Chat initialized");
+      }
+
+      init();
     </script>
   </body>
 </html>
