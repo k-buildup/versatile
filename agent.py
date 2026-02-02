@@ -79,7 +79,7 @@ class GenerationConfig:
 class PromptBuilder:
     """프롬프트 생성 담당 클래스"""
     
-    DEFAULT_SYSTEM_PROMPT = "You are name is Versatile (버사타일)."
+    DEFAULT_SYSTEM_PROMPT = "You are name is Versatile (버사타일).\n\n---\n"
     
     TODOLIST_PROMPT = """
 # Important
@@ -147,6 +147,35 @@ Write a final answer to the user input based on the thought process below.
 # Thought process
 
 {thinking_process}
+"""
+
+    TOOL_SELECTION_PROMPT = """
+# Important
+
+1. get_datetime(location: str) - Get the current datetime in a given location
+   - location: The city and state, e.g. "Seoul, Republic of Korea"
+
+2. get_stock_price(symbol: str) - Get the current stock price for a given symbol
+   - symbol: The stock symbol, e.g. "AAPL", "MSFT"
+
+When the user asks a question that requires a tool, respond ONLY with a JSON object in the following format:
+{"tool": "tool_name", "args": {"arg_name": "arg_value"}}
+
+If no tool is needed, respond with:
+{"tool": "none", "response": "your direct answer"}
+
+---
+
+# Examples
+
+- **Input**: "What time is it in Seoul?"
+- **Output**: {"tool": "get_datetime", "args": {"location": "Seoul, Republic of Korea"}}
+
+- **Input**: "What's the price of AAPL?"
+- **Output**: {"tool": "get_stock_price", "args": {"symbol": "AAPL"}}
+
+- **Input**: "Hello!"
+- **Output**: {"tool": "none", "response": "Hello! How can I help you today?"}
 """
 
 
@@ -344,52 +373,98 @@ class VersatileAgent:
         chat_history = self.get_history(session_id)
         
         messages = [
-            SystemMessage(content=PromptBuilder.DEFAULT_SYSTEM_PROMPT),
+            SystemMessage(content=f"{PromptBuilder.DEFAULT_SYSTEM_PROMPT}\n\n{PromptBuilder.TOOL_SELECTION_PROMPT}"),
             *chat_history,
             HumanMessage(content=user_message)
         ]
         
-        llm_with_tools = self.llm.bind_tools(
-            tools=[get_datetime, get_stock_price],
-            tool_choice={"type": "function", "function": {"name": "get_datetime"}}
-        )
-        
-        ai_msg = await llm_with_tools.ainvoke(messages)
+        # GBNF 문법: JSON 형태의 툴 호출 또는 일반 응답
+        tool_call_gbnf = r"""
+root ::= "{" ws "\"tool\"" ws ":" ws tool ws "," ws args ws "}"
+tool ::= "\"get_datetime\"" | "\"get_stock_price\"" | "\"none\""
+args ::= datetime-args | stock-args | response-args
 
-        if ai_msg.tool_calls:
-            for tool_call in ai_msg.tool_calls:
-                tool_name = tool_call["name"]
-                tool_args = tool_call["args"]
-                tool_id = tool_call["id"]
-                
-                yield OutputEvent(OutputMode.TOOL_CALL, "tag", tool_name, is_start=True)
-                yield OutputEvent(OutputMode.TOOL_CALL, "tag", is_start=False)
-                
-                if tool_name == "get_datetime":
-                    result = get_datetime.invoke(tool_args)
-                elif tool_name == "get_stock_price":
-                    result = get_stock_price.invoke(tool_args)
-                else:
-                    result = "Unknown tool"
-                    
-                yield OutputEvent(OutputMode.TOOL_RESULT, "tag", result, is_start=True)
-                yield OutputEvent(OutputMode.TOOL_RESULT, "tag", is_start=False)
-                
-                messages.append(ToolMessage(content=str(result), tool_call_id=tool_id))
+datetime-args ::= "\"args\"" ws ":" ws "{" ws "\"location\"" ws ":" ws string ws "}"
+stock-args ::= "\"args\"" ws ":" ws "{" ws "\"symbol\"" ws ":" ws string ws "}"
+response-args ::= "\"response\"" ws ":" ws string
 
-        yield OutputEvent(OutputMode.BASIC, "tag", is_start=True)
+string ::= "\"" (
+    [^"\\] | 
+    "\\" (["\\/bfnrt] | "u" [0-9a-fA-F]{4})
+)* "\""
+ws ::= [ \t\n]*
+"""
         
-        final_response = ""
+        tool_grammar = LlamaGrammar.from_string(tool_call_gbnf)
+        chain = self.llm.bind(grammar=tool_grammar)
         
-        async for chunk in self.llm.astream(messages):
+        # 툴 선택 및 인자 생성
+        full_response = ""
+        async for chunk in chain.astream(messages):
             text = chunk.content
-            yield OutputEvent(OutputMode.BASIC, "stream", text)
-            final_response += text
+            full_response += text
         
-        yield OutputEvent(OutputMode.BASIC, "tag", is_start=False)
-        
-        chat_history.append(HumanMessage(content=user_message))
-        chat_history.append(AIMessage(content=final_response.strip()))
+        # JSON 파싱
+        try:
+            tool_call = json.loads(full_response)
+            tool_name = tool_call.get("tool")
+            
+            if tool_name == "none":
+                # 툴이 필요없는 경우 바로 응답
+                direct_response = tool_call.get("response", "")
+                
+                yield OutputEvent(OutputMode.BASIC, "tag", is_start=True)
+                yield OutputEvent(OutputMode.BASIC, "stream", direct_response)
+                yield OutputEvent(OutputMode.BASIC, "tag", is_start=False)
+                
+                chat_history.append(HumanMessage(content=user_message))
+                chat_history.append(AIMessage(content=direct_response))
+                return
+            
+            # 툴 호출
+            tool_args = tool_call.get("args", {})
+            
+            yield OutputEvent(OutputMode.TOOL_CALL, "tag", f"{tool_name}: {json.dumps(tool_args)}", is_start=True)
+            yield OutputEvent(OutputMode.TOOL_CALL, "tag", is_start=False)
+            
+            # 툴 실행
+            if tool_name == "get_datetime":
+                result = get_datetime.invoke(tool_args)
+            elif tool_name == "get_stock_price":
+                result = get_stock_price.invoke(tool_args)
+            else:
+                result = "Unknown tool"
+            
+            yield OutputEvent(OutputMode.TOOL_RESULT, "tag", result, is_start=True)
+            yield OutputEvent(OutputMode.TOOL_RESULT, "tag", is_start=False)
+            
+            # 툴 결과를 바탕으로 최종 응답 생성
+            final_messages = [
+                SystemMessage(content=PromptBuilder.DEFAULT_SYSTEM_PROMPT),
+                *chat_history,
+                HumanMessage(content=user_message),
+                AIMessage(content=f"Tool result: {result}"),
+                HumanMessage(content=f"Tool result를 참고해서 최종 답변을 제공해 주세요."),
+            ]
+            
+            yield OutputEvent(OutputMode.BASIC, "tag", is_start=True)
+            
+            final_response = ""
+            async for chunk in self.llm.astream(final_messages):
+                text = chunk.content
+                yield OutputEvent(OutputMode.BASIC, "stream", text)
+                final_response += text
+            
+            yield OutputEvent(OutputMode.BASIC, "tag", is_start=False)
+            
+            chat_history.append(HumanMessage(content=user_message))
+            chat_history.append(AIMessage(content=final_response.strip()))
+            
+        except json.JSONDecodeError:
+            # JSON 파싱 실패시 에러 처리
+            yield OutputEvent(OutputMode.BASIC, "tag", is_start=True)
+            yield OutputEvent(OutputMode.BASIC, "stream", "Sorry, I encountered an error processing your request.")
+            yield OutputEvent(OutputMode.BASIC, "tag", is_start=False)
     
     async def think_and_answer_stream(self, user_message: str, session_id: str = "default") -> AsyncGenerator[OutputEvent, None]:
         """사고 과정을 거친 답변 (실시간 스트리밍)"""
