@@ -357,7 +357,7 @@ class VersatileAgent:
         
         llm_with_tools = self.llm.bind_tools(
             tools=[get_datetime, get_stock_price],
-            tool_choice={"type": "function", "function": {"name": "get_stock_price"}}
+            tool_choice={"type": "function", "function": {"name": "get_datetime"}}
         )
         
         ai_msg = await llm_with_tools.ainvoke(messages)
