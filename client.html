@@ -1008,7 +1008,11 @@
         thinkingContainer.className = "flex flex-col gap-2";
         thinkingContainer.dataset.thinkingContainer = "true";
 
+        const hr = document.createElement("hr");
+        hr.className = "!mt-0 !mb-4 !border-[#3a3a3a]";
+
         contentDiv.appendChild(thinkingContainer);
+        contentDiv.appendChild(hr);
         messageDiv.appendChild(avatar);
         messageDiv.appendChild(contentDiv);
 
