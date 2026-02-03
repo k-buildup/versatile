@@ -21,7 +21,7 @@ class DateTimeInput(BaseModel):
 
 @tool("get_datetime", args_schema=DateTimeInput)
 def get_datetime(location: str):
-    """Get the current datetime in a given location"""
+    """Get the current date and time in a given location"""
     return f"Now the datetime in {location} is {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
 
 
@@ -32,6 +32,15 @@ class StockPriceInput(BaseModel):
 def get_stock_price(symbol: str):
     """Get the current stock price for a given symbol"""
     return f"Now the stock price for {symbol} is $150.00"
+
+
+class WeatherInput(BaseModel):
+    location: str = Field(description="The city and state, e.g. Seoul, Republic of Korea")
+
+@tool("get_weather", args_schema=WeatherInput)
+def get_weather(location: str):
+    """Get the current weather for a given location"""
+    return f"Now the weather in {location} is 17 degrees Celsius and sunny"
 
 
 # ============================================================================
@@ -152,11 +161,16 @@ Write a final answer to the user input based on the thought process below.
     TOOL_SELECTION_PROMPT = """
 # Important
 
-1. get_datetime(location: str) - Get the current datetime in a given location
+Refrain from using your own data to respond. You must rely exclusively on the provided tools.
+
+1. get_datetime(location: str) - Get the current date and time in a given location
    - location: The city and state, e.g. "Seoul, Republic of Korea"
 
 2. get_stock_price(symbol: str) - Get the current stock price for a given symbol
    - symbol: The stock symbol, e.g. "AAPL", "MSFT"
+   
+3. get_weather(location: str) - Get the current weather for a given location
+   - location: The city and state, e.g. "Seoul, Republic of Korea"
 
 When the user asks a question that requires a tool, respond ONLY with a JSON object in the following format:
 {"tool": "tool_name", "args": {"arg_name": "arg_value"}}
@@ -387,11 +401,12 @@ class VersatileAgent:
         # GBNF 문법: JSON 형태의 툴 호출 또는 일반 응답
         tool_call_gbnf = r"""
 root ::= "{" ws "\"tool\"" ws ":" ws tool ws "," ws args ws "}"
-tool ::= "\"get_datetime\"" | "\"get_stock_price\"" | "\"none\""
-args ::= datetime-args | stock-args | response-args
+tool ::= "\"get_datetime\"" | "\"get_stock_price\"" | "\"get_weather\"" | "\"none\""
+args ::= datetime-args | stock-args | weather-args | response-args
 
 datetime-args ::= "\"args\"" ws ":" ws "{" ws "\"location\"" ws ":" ws string ws "}"
 stock-args ::= "\"args\"" ws ":" ws "{" ws "\"symbol\"" ws ":" ws string ws "}"
+weather-args ::= "\"args\"" ws ":" ws "{" ws "\"location\"" ws ":" ws string ws "}"
 response-args ::= "\"response\"" ws ":" ws string
 
 string ::= "\"" (
@@ -438,6 +453,8 @@ ws ::= [ \t\n]*
                 result = get_datetime.invoke(tool_args)
             elif tool_name == "get_stock_price":
                 result = get_stock_price.invoke(tool_args)
+            elif tool_name == "get_weather":
+                result = get_weather.invoke(tool_args)
             else:
                 result = "Unknown tool"
             
