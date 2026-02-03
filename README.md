@@ -60,6 +60,9 @@ $ pip install -r requirements.txt
    MODEL_PATH=./models/llama-3-Korean-Bllossom-8B/Q8_0.gguf
 
    JWT_SECRET_KEY=<your-secret-key>
+
+   # 웹 검색
+   TAVILY_API_KEY=<your-tavily-api-key>
    ```
 
 ---
