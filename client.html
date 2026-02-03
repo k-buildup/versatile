@@ -119,6 +119,7 @@
         overflow: hidden;
         background: #1e1e1e;
         border: 1px solid #2a2a2a;
+        position: relative;
       }
 
       .markdown-content pre code {
@@ -196,6 +197,8 @@
       .session-active {
         background-color: #252525;
         border-left: 2px solid #8b7355;
+        border-top-left-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
       }
 
       .modal {
@@ -246,6 +249,66 @@
 
       .chevron-icon.collapsed {
         transform: rotate(-90deg);
+      }
+
+      /* 복사 버튼 스타일 */
+      .copy-code-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        padding: 6px 10px;
+        background: #2a2a2a;
+        border: 1px solid #3a3a3a;
+        border-radius: 4px;
+        color: #a0a0a0;
+        font-size: 0.75rem;
+        cursor: pointer;
+        opacity: 0;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .markdown-content pre:hover .copy-code-btn {
+        opacity: 1;
+      }
+
+      .copy-code-btn:hover {
+        background: #3a3a3a;
+        color: #e5e5e5;
+      }
+
+      .copy-code-btn.copied {
+        background: #166534;
+        color: #86efac;
+        border-color: #16a34a;
+      }
+
+      .copy-message-btn {
+        padding: 6px 12px;
+        background: #2a2a2a;
+        border: 1px solid #3a3a3a;
+        border-radius: 6px;
+        color: #a0a0a0;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .copy-message-btn:hover {
+        background: #3a3a3a;
+        color: #e5e5e5;
+      }
+
+      .copy-message-btn.copied {
+        background: #166534;
+        color: #86efac;
+        border-color: #16a34a;
       }
     </style>
   </head>
@@ -614,6 +677,59 @@
       const chatTitle = document.getElementById("chatTitle");
       const userDisplayName = document.getElementById("userDisplayName");
 
+      // Copy to clipboard function
+      async function copyToClipboard(text, button) {
+        try {
+          await navigator.clipboard.writeText(text);
+          const originalHTML = button.innerHTML;
+          button.innerHTML = '<i data-lucide="check" class="w-3 h-3"></i>';
+          button.classList.add("copied");
+          lucide.createIcons();
+
+          setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.classList.remove("copied");
+            lucide.createIcons();
+          }, 2000);
+        } catch (err) {
+          console.error("Failed to copy:", err);
+        }
+      }
+
+      // Add copy button to code blocks
+      function addCopyButtonToCode(pre) {
+        if (pre.querySelector(".copy-code-btn")) return;
+
+        const button = document.createElement("button");
+        button.className = "copy-code-btn !p-2";
+        button.innerHTML = '<i data-lucide="copy" class="w-3 h-3"></i>';
+
+        button.addEventListener("click", () => {
+          const code = pre.querySelector("code");
+          copyToClipboard(code.textContent, button);
+        });
+
+        pre.style.position = "relative";
+        pre.appendChild(button);
+        lucide.createIcons();
+      }
+
+      // Add copy button to assistant message
+      function addCopyButtonToMessage(contentDiv, rawText) {
+        if (contentDiv.querySelector(".copy-message-btn")) return;
+
+        const button = document.createElement("button");
+        button.className = "copy-message-btn !p-2";
+        button.innerHTML = '<i data-lucide="copy" class="w-3 h-3"></i>';
+
+        button.addEventListener("click", () => {
+          copyToClipboard(rawText, button);
+        });
+
+        contentDiv.appendChild(button);
+        lucide.createIcons();
+      }
+
       // Auth Functions
       function showAuthError(message) {
         authError.textContent = message;
@@ -815,6 +931,11 @@
                             hljs.highlightElement(block);
                             block.dataset.highlighted = "yes";
                           });
+
+                        // 코드 블럭에 복사 버튼 추가
+                        wrapper.querySelectorAll("pre").forEach((pre) => {
+                          addCopyButtonToCode(pre);
+                        });
                       } catch (e) {
                         stepElement.contentDiv.textContent = step.content;
                       }
@@ -836,7 +957,19 @@
                         hljs.highlightElement(block);
                         block.dataset.highlighted = "yes";
                       });
+
+                    // 코드 블럭에 복사 버튼 추가
+                    finalResponse.querySelectorAll("pre").forEach((pre) => {
+                      addCopyButtonToCode(pre);
+                    });
+
                     thinkingMessage.contentDiv.appendChild(finalResponse);
+
+                    // 메시지 복사 버튼 추가
+                    addCopyButtonToMessage(
+                      thinkingMessage.contentDiv,
+                      msg.content,
+                    );
                   }
                 } else {
                   // 일반 메시지 (Chat 또는 Tool 모드)
@@ -958,7 +1091,7 @@
         }
 
         const contentDiv = document.createElement("div");
-        contentDiv.className = "flex-1 space-y-2";
+        contentDiv.className = "flex-1 space-y-2 overflow-x-scroll";
 
         const messageContent = document.createElement("div");
         messageContent.className = "prose prose-invert max-w-none";
@@ -975,11 +1108,22 @@
           messageContent.querySelectorAll("pre code").forEach((block) => {
             hljs.highlightElement(block);
           });
+
+          // 코드 블럭에 복사 버튼 추가
+          messageContent.querySelectorAll("pre").forEach((pre) => {
+            addCopyButtonToCode(pre);
+          });
         } else {
           messageContent.textContent = content;
         }
 
         contentDiv.appendChild(messageContent);
+
+        // 어시스턴트 메시지에 복사 버튼 추가
+        if (role === "assistant") {
+          addCopyButtonToMessage(contentDiv, content);
+        }
+
         messageDiv.appendChild(avatar);
         messageDiv.appendChild(contentDiv);
 
@@ -1002,7 +1146,7 @@
         avatar.innerHTML = '<i data-lucide="bot" class="w-4 h-4"></i>';
 
         const contentDiv = document.createElement("div");
-        contentDiv.className = "flex-1 space-y-2 mt-[3px]";
+        contentDiv.className = "flex-1 space-y-2 mt-[3px] overflow-x-scroll";
 
         const thinkingContainer = document.createElement("div");
         thinkingContainer.className = "flex flex-col gap-2";
@@ -1179,6 +1323,14 @@
                   console.log("Stream completed");
                   if (currentMessageDiv && currentText) {
                     updateMessage(currentMessageDiv, currentText);
+
+                    // 최종 메시지에 복사 버튼 추가
+                    if (thinkingMessage) {
+                      addCopyButtonToMessage(
+                        thinkingMessage.contentDiv,
+                        currentText,
+                      );
+                    }
                   }
                   if (currentThinkingStep) {
                     completeThinkingStep(currentThinkingStep.stepDiv, true);
@@ -1283,6 +1435,11 @@
                         block.dataset.highlighted = "yes";
                       }
                     });
+
+                    // 코드 블럭에 복사 버튼 추가
+                    wrapper.querySelectorAll("pre").forEach((pre) => {
+                      addCopyButtonToCode(pre);
+                    });
                   } catch (e) {
                     console.error("Markdown parse error:", e);
                     p.textContent = newMarkdownText;
@@ -1314,6 +1471,12 @@
                   block.dataset.highlighted = "yes";
                 }
               });
+
+              // 코드 블럭에 복사 버튼 추가
+              div.querySelectorAll("pre").forEach((pre) => {
+                addCopyButtonToCode(pre);
+              });
+
               scrollToBottom();
             } catch (e) {
               console.error("Update message error:", e);
