@@ -4,9 +4,12 @@ from dataclasses import dataclass
 from datetime import datetime
 import multiprocessing
 from enum import Enum
+import yfinance as yf
+import requests
 import json
+import pytz
 
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage, ToolMessage
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from langchain_community.chat_models import ChatLlamaCpp
 from llama_cpp import LlamaGrammar
 from langchain.tools import tool
@@ -17,12 +20,12 @@ from langchain.tools import tool
 # ============================================================================
 
 class DateTimeInput(BaseModel):
-    location: str = Field(description="The city and state, e.g. Seoul, Republic of Korea")
+    timezone: str = Field(description="The IANA timezone string, e.g. 'Asia/Seoul'")
 
 @tool("get_datetime", args_schema=DateTimeInput)
-def get_datetime(location: str):
-    """Get the current date and time in a given location"""
-    return f"Now the datetime in {location} is {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+def get_datetime(timezone: str):
+    """Get the current date and time in a given timezone"""
+    return f"Now the date and time in {timezone} is {datetime.now(pytz.timezone(timezone)).strftime('%Y-%m-%d %H:%M:%S')}"
 
 
 class StockPriceInput(BaseModel):
@@ -31,16 +34,50 @@ class StockPriceInput(BaseModel):
 @tool("get_stock_price", args_schema=StockPriceInput)
 def get_stock_price(symbol: str):
     """Get the current stock price for a given symbol"""
-    return f"Now the stock price for {symbol} is $150.00"
+    try:
+        ticker = yf.Ticker(symbol)
+        data = ticker.history(period="1d", interval="1m")
+        
+        if data.empty:
+            return f"Could not find price information for {symbol}. Please check the symbol."
+
+        current_price = data['Close'].iloc[-1]
+        formatted_price = f"{current_price:.2f}"
+        
+        return f"The current stock price for {symbol} is ${formatted_price}"
+    
+    except Exception as e:
+        return f"Error retrieving data for {symbol}: {str(e)}"
 
 
 class WeatherInput(BaseModel):
-    location: str = Field(description="The city and state, e.g. Seoul, Republic of Korea")
+    location: str = Field(description="The city name, e.g. Seoul")
 
 @tool("get_weather", args_schema=WeatherInput)
 def get_weather(location: str):
     """Get the current weather for a given location"""
-    return f"Now the weather in {location} is 17 degrees Celsius and sunny"
+    geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={location}&count=1&language=en&format=json"
+    
+    try:
+        geo_res = requests.get(geo_url).json()
+        if not geo_res.get("results"):
+            return f"Could not find coordinates for {location}."
+        
+        lat = geo_res["results"][0]["latitude"]
+        lon = geo_res["results"][0]["longitude"]
+        city_full_name = geo_res["results"][0]["name"]
+
+        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
+        weather_res = requests.get(weather_url).json()
+        
+        current = weather_res["current_weather"]
+        temp = current["temperature"]
+        windspeed = current["windspeed"]
+
+        return f"Current weather in {city_full_name}: {temp}°C, Wind Speed: {windspeed}km/h."
+    
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 
 # ============================================================================
@@ -163,14 +200,14 @@ Write a final answer to the user input based on the thought process below.
 
 Refrain from using your own data to respond. You must rely exclusively on the provided tools.
 
-1. get_datetime(location: str) - Get the current date and time in a given location
-   - location: The city and state, e.g. "Seoul, Republic of Korea"
+1. get_datetime(timezone: str) - Get the current date and time in a given timezone
+   - timezone: The IANA timezone string, e.g. "Asia/Seoul"
 
 2. get_stock_price(symbol: str) - Get the current stock price for a given symbol
    - symbol: The stock symbol, e.g. "AAPL", "MSFT"
    
 3. get_weather(location: str) - Get the current weather for a given location
-   - location: The city and state, e.g. "Seoul, Republic of Korea"
+   - location: The city name, e.g. "Seoul"
 
 When the user asks a question that requires a tool, respond ONLY with a JSON object in the following format:
 {"tool": "tool_name", "args": {"arg_name": "arg_value"}}
@@ -183,7 +220,7 @@ If no tool is needed, respond with:
 # Examples
 
 - **Input**: "What time is it in Seoul?"
-- **Output**: {"tool": "get_datetime", "args": {"location": "Seoul, Republic of Korea"}}
+- **Output**: {"tool": "get_datetime", "args": {"timezone": "Asia/Seoul"}}
 
 - **Input**: "What's the price of AAPL?"
 - **Output**: {"tool": "get_stock_price", "args": {"symbol": "AAPL"}}
@@ -404,7 +441,7 @@ root ::= "{" ws "\"tool\"" ws ":" ws tool ws "," ws args ws "}"
 tool ::= "\"get_datetime\"" | "\"get_stock_price\"" | "\"get_weather\"" | "\"none\""
 args ::= datetime-args | stock-args | weather-args | response-args
 
-datetime-args ::= "\"args\"" ws ":" ws "{" ws "\"location\"" ws ":" ws string ws "}"
+datetime-args ::= "\"args\"" ws ":" ws "{" ws "\"timezone\"" ws ":" ws string ws "}"
 stock-args ::= "\"args\"" ws ":" ws "{" ws "\"symbol\"" ws ":" ws string ws "}"
 weather-args ::= "\"args\"" ws ":" ws "{" ws "\"location\"" ws ":" ws string ws "}"
 response-args ::= "\"response\"" ws ":" ws string
