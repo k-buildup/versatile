@@ -101,4 +101,4 @@ $ python server.py
 - [x] MCP 코어
 
 - [x] 사고 모드 개선
-- [ ] MCP (툴) 개선
+- [x] MCP (툴) 개선
