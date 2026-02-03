@@ -1,3 +1,5 @@
+![banner](./images/banner.png)
+
 ## 🤖 버사타일 (Versatile)
 
 **Korean Bllossom** 모델을 활용한 AI 에이전트 프로젝트
