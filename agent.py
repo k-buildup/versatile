@@ -1,6 +1,7 @@
 from typing import List, Dict, AsyncGenerator
 from pydantic import BaseModel, Field
 from dataclasses import dataclass
+from dotenv import load_dotenv
 from datetime import datetime
 import multiprocessing
 from enum import Enum
@@ -8,11 +9,14 @@ import yfinance as yf
 import requests
 import json
 import pytz
+import os
 
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from langchain_community.chat_models import ChatLlamaCpp
 from llama_cpp import LlamaGrammar
 from langchain.tools import tool
+
+load_dotenv()
 
 
 # ============================================================================
@@ -78,6 +82,41 @@ def get_weather(location: str):
     
     except Exception as e:
         return f"Error: {str(e)}"
+
+
+class WebSearchInput(BaseModel):
+    query: str = Field(description="The search query to look up on the internet")
+
+@tool("web_search", args_schema=WebSearchInput)
+def web_search(query: str):
+    """Search the internet for current events or specific information."""
+    url = "https://api.tavily.com/search"
+    
+    payload = {
+        "api_key": os.getenv("TAVILY_API_KEY"),
+        "query": query,
+        "search_depth": "basic",
+        "include_answer": True,
+        "max_results": 3
+    }
+
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()
+        data = response.json()
+        
+        results = data.get("results", [])
+        if not results:
+            return "No relevant search results found."
+            
+        formatted_results = []
+        for res in results:
+            formatted_results.append(f"- Title: {res['title']}\n  Content: {res['content']}\n  URL: {res['url']}")
+        
+        return "\n\n".join(formatted_results)
+    
+    except Exception as e:
+        return f"Error during web search: {str(e)}"
 
 
 # ============================================================================
@@ -209,6 +248,9 @@ Refrain from using your own data to respond. You must rely exclusively on the pr
 3. get_weather(location: str) - Get the current weather for a given location
    - location: The city name, e.g. "Seoul"
 
+4. web_search(query: str) - Search the internet for information, news, or specific facts
+   - query: The search query string
+
 When the user asks a question that requires a tool, respond ONLY with a JSON object in the following format:
 {"tool": "tool_name", "args": {"arg_name": "arg_value"}}
 
@@ -224,6 +266,9 @@ If no tool is needed, respond with:
 
 - **Input**: "What's the price of AAPL?"
 - **Output**: {"tool": "get_stock_price", "args": {"symbol": "AAPL"}}
+
+- **Input**: "Who is the CEO of Apple?"
+- **Output**: {"tool": "web_search", "args": {"query": "Apple CEO"}}
 
 - **Input**: "Hello!"
 - **Output**: {"tool": "none", "response": "Hello! How can I help you today?"}
@@ -438,12 +483,13 @@ class VersatileAgent:
         # GBNF 문법: JSON 형태의 툴 호출 또는 일반 응답
         tool_call_gbnf = r"""
 root ::= "{" ws "\"tool\"" ws ":" ws tool ws "," ws args ws "}"
-tool ::= "\"get_datetime\"" | "\"get_stock_price\"" | "\"get_weather\"" | "\"none\""
-args ::= datetime-args | stock-args | weather-args | response-args
+tool ::= "\"get_datetime\"" | "\"get_stock_price\"" | "\"get_weather\"" | "\"web_search\"" | "\"none\""
+args ::= datetime-args | stock-args | weather-args | search-args | response-args
 
 datetime-args ::= "\"args\"" ws ":" ws "{" ws "\"timezone\"" ws ":" ws string ws "}"
 stock-args ::= "\"args\"" ws ":" ws "{" ws "\"symbol\"" ws ":" ws string ws "}"
 weather-args ::= "\"args\"" ws ":" ws "{" ws "\"location\"" ws ":" ws string ws "}"
+search-args ::= "\"args\"" ws ":" ws "{" ws "\"query\"" ws ":" ws string ws "}"
 response-args ::= "\"response\"" ws ":" ws string
 
 string ::= "\"" (
@@ -492,6 +538,8 @@ ws ::= [ \t\n]*
                 result = get_stock_price.invoke(tool_args)
             elif tool_name == "get_weather":
                 result = get_weather.invoke(tool_args)
+            elif tool_name == "web_search":
+                result = web_search.invoke(tool_args)
             else:
                 result = "Unknown tool"
             
