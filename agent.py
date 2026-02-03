@@ -263,7 +263,13 @@ ws     ::= [ \t\n]
         try:
             todolist = json.loads(full_response)
 
-            if len(todolist) == 0:
+            clean_todolist = []
+            for todo in todolist:
+                if todo.strip() != "":
+                    clean_todolist.append(todo.strip())
+            todolist = clean_todolist
+
+            if len(clean_todolist) == 0:
                 todolist = ["사용자가 원하는 내용 파악하기"]
         except json.JSONDecodeError:
             todolist = ["사용자가 원하는 내용 파악하기"]
