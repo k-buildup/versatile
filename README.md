@@ -99,7 +99,5 @@ $ python server.py
 
 ### ✅ Todo
 
-- [ ] answor-side-tool 구현 (도구 모드 제거)
-- [ ] tool 표시 및 저장
-
+- [x] tool 표시 및 저장
 - [ ] next.js 마이그레이션
