@@ -99,11 +99,7 @@ $ python server.py
 
 ### ✅ Todo
 
-- [x] Q&A
-- [x] 대화 기억
-- [x] LangChain 적용
-- [x] 사고 모드
-- [x] MCP 코어
+- [ ] answor-side-tool 구현 (도구 모드 제거)
+- [ ] tool 표시 및 저장
 
-- [x] 사고 모드 개선
-- [x] MCP (툴) 개선
+- [ ] next.js 마이그레이션
