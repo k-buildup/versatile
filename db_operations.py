@@ -163,15 +163,17 @@ def create_message(
     role: str,
     content: str,
     mode: str = "chat",
-    thinking_process: Optional[List[Dict]] = None
+    thinking_process: Optional[List[Dict]] = None,
+    tool_usage: Optional[List[Dict]] = None
 ) -> Message:
-    """메시지 생성 (사고 과정 포함)"""
+    """메시지 생성 (사고 과정 및 도구 사용 포함)"""
     message = Message(
         session_id=session_id,
         role=role,
         content=content,
         mode=mode,
-        thinking_process=thinking_process  # JSON으로 저장
+        thinking_process=thinking_process,  # JSON으로 저장
+        tool_usage=tool_usage  # JSON으로 저장
     )
     db.add(message)
     db.commit()
@@ -318,8 +320,8 @@ def get_feedback_stats(db: Session, user_id: Optional[int] = None) -> Dict:
 # History Management
 # ============================================================================
 
-def get_formatted_history(db: Session, session_id: str, include_thinking: bool = True) -> List[Dict[str, any]]:
-    """포맷된 대화 기록 반환 (사고 과정 포함 옵션)"""
+def get_formatted_history(db: Session, session_id: str, include_thinking: bool = True, include_tool: bool = True) -> List[Dict[str, any]]:
+    """포맷된 대화 기록 반환 (사고 과정 및 도구 사용 포함 옵션)"""
     messages = get_session_messages(db, session_id)
     
     result = []
@@ -334,6 +336,10 @@ def get_formatted_history(db: Session, session_id: str, include_thinking: bool =
         # think 모드이고 사고 과정이 있으면 포함
         if include_thinking and msg.mode == "think" and msg.thinking_process:
             message_dict["thinking_process"] = msg.thinking_process
+        
+        # tool 모드이고 도구 사용이 있으면 포함
+        if include_tool and msg.mode == "tool" and msg.tool_usage:
+            message_dict["tool_usage"] = msg.tool_usage
         
         result.append(message_dict)
     

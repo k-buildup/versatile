@@ -84,6 +84,7 @@ class Message(Base):
     content = Column(Text, nullable=False)
     mode = Column(String(50), default='chat')
     thinking_process = Column(JSON, nullable=True, comment='think 모드에서 사고 과정 저장')
+    tool_usage = Column(JSON, nullable=True, comment='tool 모드에서 도구 사용 저장')
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), index=True)
     
     # Relationships

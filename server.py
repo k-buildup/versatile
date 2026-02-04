@@ -433,7 +433,9 @@ async def chat(
     async def event_generator():
         assistant_response = ""
         thinking_process = []  # 사고 과정 저장
+        tool_usage = []  # 도구 사용 저장
         current_todo = None
+        current_tool = None
         
         try:
             if request.mode == "tool":
@@ -472,6 +474,30 @@ async def chat(
                         if current_todo:
                             current_todo["content"] += content
                 
+                # Tool 모드 도구 사용 수집
+                elif request.mode == "tool":
+                    if mode == "tool_call" and is_start and content:
+                        # 도구 호출 시작
+                        try:
+                            tool_info = content.split(": ", 1)
+                            tool_name = tool_info[0]
+                            tool_input = tool_info[1] if len(tool_info) > 1 else "{}"
+                            
+                            current_tool = {
+                                "tool_name": tool_name,
+                                "tool_input": tool_input,
+                                "tool_output": ""
+                            }
+                        except Exception as e:
+                            print(f"Tool info parse error: {e}")
+                    
+                    elif mode == "tool_result" and is_start and content:
+                        # 도구 결과 저장
+                        if current_tool:
+                            current_tool["tool_output"] = content
+                            tool_usage.append(current_tool)
+                            current_tool = None
+                
                 # 최종 응답 수집
                 if event_type in ["text", "stream"] and mode == "basic":
                     if content:
@@ -483,7 +509,11 @@ async def chat(
             if current_todo:
                 thinking_process.append(current_todo)
             
-            # 어시스턴트 응답 저장 (사고 과정 포함)
+            # 마지막 tool 저장
+            if current_tool:
+                tool_usage.append(current_tool)
+            
+            # 어시스턴트 응답 저장 (사고 과정 또는 도구 사용 포함)
             if assistant_response.strip():
                 try:
                     with get_db() as db_context:
@@ -493,7 +523,8 @@ async def chat(
                             "assistant",
                             assistant_response,
                             request.mode,
-                            thinking_process=thinking_process if thinking_process else None
+                            thinking_process=thinking_process if thinking_process else None,
+                            tool_usage=tool_usage if tool_usage else None
                         )
                 except Exception as db_error:
                     print(f"Failed to save assistant message: {db_error}")
@@ -537,7 +568,11 @@ async def get_history(
         if not session or session.user_id != current_user.id:
             raise HTTPException(status_code=404, detail="Session not found")
         
-        formatted_history = db_ops.get_formatted_history(db, session_id, include_thinking=True)
+        formatted_history = db_ops.get_formatted_history(
+            db, session_id, 
+            include_thinking=True, 
+            include_tool=True
+        )
         
         return HistoryResponse(
             session_id=session_id,
