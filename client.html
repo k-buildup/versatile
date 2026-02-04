@@ -100,6 +100,14 @@
         margin-bottom: 1em;
       }
 
+      .markdown-content ul {
+        list-style: circle !important;
+      }
+
+      .markdown-content ol {
+        list-style: decimal !important;
+      }
+
       .markdown-content li {
         margin-bottom: 0.3em;
       }
@@ -582,7 +590,7 @@
                 class="mode-btn size-[48px] px-4 py-2 bg-dark-text/5 text-dark-text rounded-xl hover:bg-dark-text/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 data-mode="tool"
               >
-                <i data-lucide="pickaxe" class="w-4 h-4"></i>
+                <i data-lucide="toolbox" class="w-4 h-4"></i>
               </button>
               <button
                 class="mode-btn size-[48px] px-4 py-2 bg-dark-text/5 text-dark-text rounded-xl hover:bg-dark-text/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -971,8 +979,46 @@
                       msg.content,
                     );
                   }
+                }
+                // Tool 모드였고 tool_usage가 있는 경우
+                else if (msg.tool_usage && msg.tool_usage.length > 0) {
+                  const toolMessage = createToolMessage();
+
+                  // 각 도구 사용 렌더링
+                  msg.tool_usage.forEach((toolUse) => {
+                    addToolUsage(
+                      toolMessage.toolContainer,
+                      toolUse.tool_name,
+                      toolUse.tool_input,
+                      toolUse.tool_output,
+                    );
+                  });
+
+                  // 최종 응답 추가 (hr 뒤에)
+                  if (msg.content) {
+                    const finalResponse = document.createElement("div");
+                    finalResponse.className =
+                      "prose prose-invert max-w-none markdown-content";
+                    finalResponse.innerHTML = marked.parse(msg.content);
+                    finalResponse
+                      .querySelectorAll("pre code")
+                      .forEach((block) => {
+                        hljs.highlightElement(block);
+                        block.dataset.highlighted = "yes";
+                      });
+
+                    // 코드 블럭에 복사 버튼 추가
+                    finalResponse.querySelectorAll("pre").forEach((pre) => {
+                      addCopyButtonToCode(pre);
+                    });
+
+                    toolMessage.toolContainer.appendChild(finalResponse);
+
+                    // 메시지 복사 버튼 추가
+                    addCopyButtonToMessage(finalResponse, msg.content);
+                  }
                 } else {
-                  // 일반 메시지 (Chat 또는 Tool 모드)
+                  // 일반 메시지 (Chat 모드)
                   addMessage(msg.role, msg.content, true);
                 }
               }
@@ -1167,6 +1213,35 @@
         return { messageDiv, thinkingContainer, contentDiv };
       }
 
+      function createToolMessage() {
+        welcomeMessage.classList.add("hidden");
+
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "message-item flex gap-4 max-w-3xl m-[0_auto]";
+
+        const avatar = document.createElement("div");
+        avatar.className =
+          "w-8 h-8 rounded-full bg-dark-hover flex items-center justify-center flex-shrink-0";
+        avatar.innerHTML = '<i data-lucide="bot" class="w-4 h-4"></i>';
+
+        const contentDiv = document.createElement("div");
+        contentDiv.className = "w-full mt-[3px]";
+
+        const toolContainer = document.createElement("div");
+        toolContainer.className = "flex flex-col gap-[16px]";
+        toolContainer.dataset.toolContainer = "true";
+
+        contentDiv.appendChild(toolContainer);
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(contentDiv);
+
+        chatContainer.insertBefore(messageDiv, typingIndicator);
+        lucide.createIcons();
+        scrollToBottom();
+
+        return { messageDiv, toolContainer, contentDiv };
+      }
+
       function addThinkingStep(container, todoText) {
         const stepDiv = document.createElement("div");
         stepDiv.className = "thinking-step flex flex-col gap-2";
@@ -1210,6 +1285,55 @@
           contentDiv: contentDiv.querySelector("p"),
           contentWrapper: contentDiv,
         };
+      }
+
+      function addToolUsage(container, toolName, toolInput, toolOutput) {
+        // 도구 이름을 한글로 변환
+        const toolNameMap = {
+          get_weather: "날씨 정보 가져오기",
+          get_datetime: "현재 시간 가져오기",
+          get_stock_price: "주식 가격 가져오기",
+          web_search: "웹 검색하기",
+        };
+
+        const displayName = toolNameMap[toolName] || toolName;
+
+        const toolSection = document.createElement("div");
+        toolSection.className = "flex flex-col gap-[16px]";
+
+        toolSection.innerHTML = `
+          <div class="flex items-center gap-[4px]">
+            <i data-lucide="hash" class="w-4 h-4 text-dark-text/40"></i>
+            <span class="text-dark-text/80">${displayName}</span>
+          </div>
+          <div class="w-full markdown-content flex flex-col gap-[8px]">
+            <div class="flex items-center gap-[8px]">
+              <i>f</i>
+              <code>${escapeHtml(toolName)}</code>
+            </div>
+            <div class="flex items-center gap-[8px]">
+              <i>args</i>
+              <code>${escapeHtml(toolInput)}</code>
+            </div>
+            <div class="flex items-center gap-[8px]">
+              <i>result</i>
+              <code>${escapeHtml(toolOutput)}</code>
+            </div>
+          </div>
+          <hr class="!mt-0 !border-[#3a3a3a]" data-separator="true" />
+        `;
+
+        container.appendChild(toolSection);
+        lucide.createIcons();
+        scrollToBottom();
+
+        return toolSection;
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
       }
 
       function completeThinkingStep(stepDiv, shouldCollapse = true) {
@@ -1300,7 +1424,9 @@
           const decoder = new TextDecoder();
 
           let thinkingMessage = null;
+          let toolMessage = null;
           let currentThinkingStep = null;
+          let currentToolUsage = null;
           let currentMessageDiv = null;
           let currentText = "";
           let buffer = "";
@@ -1325,12 +1451,7 @@
                     updateMessage(currentMessageDiv, currentText);
 
                     // 최종 메시지에 복사 버튼 추가
-                    if (thinkingMessage) {
-                      addCopyButtonToMessage(
-                        thinkingMessage.contentDiv,
-                        currentText,
-                      );
-                    }
+                    addCopyButtonToMessage(currentMessageDiv, currentText);
                   }
                   if (currentThinkingStep) {
                     completeThinkingStep(currentThinkingStep.stepDiv, true);
@@ -1394,6 +1515,45 @@
                 if (is_start) {
                   currentText = "";
                 }
+              } else if (mode === "tool_call") {
+                if (is_start && content) {
+                  // Tool 모드 시작
+                  if (!toolMessage) {
+                    toolMessage = createToolMessage();
+                  }
+
+                  // 도구 정보 파싱
+                  try {
+                    const toolInfo = content.split(": ");
+                    const toolName = toolInfo[0];
+                    const toolArgs = toolInfo[1] || "{}";
+
+                    currentToolUsage = {
+                      tool_name: toolName,
+                      tool_input: toolArgs,
+                      tool_output: "",
+                    };
+                  } catch (e) {
+                    console.error("Tool info parse error:", e);
+                  }
+                }
+              } else if (mode === "tool_result") {
+                if (is_start && content && currentToolUsage) {
+                  // 도구 결과 저장
+                  currentToolUsage.tool_output = content;
+
+                  // UI에 도구 사용 추가
+                  if (toolMessage) {
+                    addToolUsage(
+                      toolMessage.toolContainer,
+                      currentToolUsage.tool_name,
+                      currentToolUsage.tool_input,
+                      currentToolUsage.tool_output,
+                    );
+                  }
+
+                  currentToolUsage = null;
+                }
               } else if (mode === "basic") {
                 if (is_start) {
                   // 최종 응답 시작
@@ -1403,6 +1563,12 @@
                     currentMessageDiv.className =
                       "prose prose-invert max-w-none markdown-content";
                     thinkingMessage.contentDiv.appendChild(currentMessageDiv);
+                  } else if (toolMessage) {
+                    // Tool 모드였다면 최종 응답 추가
+                    currentMessageDiv = document.createElement("div");
+                    currentMessageDiv.className =
+                      "prose prose-invert max-w-none markdown-content";
+                    toolMessage.toolContainer.appendChild(currentMessageDiv);
                   } else {
                     // 일반 모드
                     currentMessageDiv = addMessage("assistant", "");
