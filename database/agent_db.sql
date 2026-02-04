@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS chat_sessions (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================
--- 메시지 테이블 (thinking_process 추가)
+-- 메시지 테이블 (thinking_process 및 tool_usage 추가)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS messages (
     content TEXT NOT NULL,
     mode VARCHAR(50) DEFAULT 'chat',
     thinking_process JSON NULL COMMENT 'think 모드에서 사고 과정 저장 (예: [{"todo": "단계명", "content": "사고 내용"}])',
+    tool_usage JSON NULL COMMENT 'tool 모드에서 도구 사용 저장 (예: [{"tool_name": "도구명", "tool_input": "입력", "tool_output": "출력"}])',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_session_id (session_id),
     INDEX idx_created_at (created_at),
