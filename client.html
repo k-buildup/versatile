@@ -1,1307 +1,1402 @@
 <!doctype html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Versatile — AI Chat</title>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Versatile — AI Chat</title>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+        <!-- Tailwind CSS -->
+        <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+        <!-- Lucide Icons -->
+        <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Marked.js for Markdown parsing -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+        <!-- Marked.js for Markdown parsing -->
+        <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
 
-    <!-- Highlight.js for code syntax highlighting -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
-    />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+        <!-- Highlight.js for code syntax highlighting -->
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+        />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              dark: {
-                bg: "#1a1a1a",
-                sidebar: "#0f0f0f",
-                border: "#2a2a2a",
-                hover: "#252525",
-                text: "#e5e5e5",
-                "text-secondary": "#a0a0a0",
-              },
-            },
-          },
-        },
-      };
-    </script>
+        <script>
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        colors: {
+                            dark: {
+                                bg: "#1a1a1a",
+                                sidebar: "#0f0f0f",
+                                border: "#2a2a2a",
+                                hover: "#252525",
+                                text: "#e5e5e5",
+                                "text-secondary": "#a0a0a0",
+                            },
+                        },
+                    },
+                },
+            };
+        </script>
 
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
-      body {
-        font-family:
-          "Inter",
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          sans-serif;
-      }
-
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-
-      ::-webkit-scrollbar-thumb {
-        background: #3a3a3a;
-        border-radius: 4px;
-      }
-
-      ::-webkit-scrollbar-thumb:hover {
-        background: #4a4a4a;
-      }
-
-      .markdown-content h1,
-      .markdown-content h2,
-      .markdown-content h3 {
-        margin-top: 1.5em;
-        margin-bottom: 0.5em;
-        font-weight: 600;
-      }
-
-      .markdown-content h1 {
-        font-size: 1.5em;
-      }
-      .markdown-content h2 {
-        font-size: 1.3em;
-      }
-      .markdown-content h3 {
-        font-size: 1.1em;
-      }
-
-      .markdown-content p {
-        margin-bottom: 1em;
-        line-height: 1.7;
-      }
-
-      .markdown-content ul,
-      .markdown-content ol {
-        margin-left: 1.5em;
-        margin-bottom: 1em;
-      }
-
-      .markdown-content ul {
-        list-style: circle !important;
-      }
-
-      .markdown-content ol {
-        list-style: decimal !important;
-      }
-
-      .markdown-content li {
-        margin-bottom: 0.3em;
-      }
-
-      .markdown-content code {
-        font-family: "Consolas", "Monaco", "Courier New", monospace;
-        font-size: 0.875em;
-        padding: 2px 6px;
-        border-radius: 3px;
-        background: #2a2a2a;
-        color: #e5e5e5;
-      }
-
-      .markdown-content pre {
-        margin: 1em 0;
-        border-radius: 6px;
-        overflow: hidden;
-        background: #1e1e1e;
-        border: 1px solid #2a2a2a;
-        position: relative;
-      }
-
-      .markdown-content pre code {
-        display: block;
-        padding: 16px;
-        overflow-x: auto;
-        background: transparent;
-        font-size: 0.875em;
-        line-height: 1.5;
-      }
-
-      .markdown-content blockquote {
-        border-left: 3px solid #3a3a3a;
-        padding-left: 16px;
-        margin: 1em 0;
-        color: #a0a0a0;
-      }
-
-      .markdown-content a {
-        color: oklch(76.9% 0.188 70.08);
-        text-decoration: none;
-      }
-
-      .markdown-content a:hover {
-        text-decoration: underline;
-      }
-
-      .markdown-content table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 1em 0;
-      }
-
-      .markdown-content th,
-      .markdown-content td {
-        border: 1px solid #2a2a2a;
-        padding: 8px 12px;
-        text-align: left;
-      }
-
-      .markdown-content th {
-        background: #252525;
-        font-weight: 600;
-      }
-
-      .markdown-content hr {
-        border: none;
-        border-top: 1px solid #3a3a3a;
-        margin: 1em 0;
-      }
-
-      @keyframes typingBounce {
-        0%,
-        60%,
-        100% {
-          transform: translateY(0);
-        }
-        30% {
-          transform: translateY(-6px);
-        }
-      }
-
-      .typing-dot {
-        animation: typingBounce 1.4s ease-in-out infinite;
-      }
-
-      .typing-dot:nth-child(2) {
-        animation-delay: 0.2s;
-      }
-
-      .typing-dot:nth-child(3) {
-        animation-delay: 0.4s;
-      }
-
-      .session-active {
-        background-color: #252525;
-        border-left: 2px solid #8b7355;
-        border-top-left-radius: 0 !important;
-        border-bottom-left-radius: 0 !important;
-      }
-
-      .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        z-index: 1000;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .modal.active {
-        display: flex;
-      }
-
-      /* 사고 과정 애니메이션 */
-      .thinking-step {
-        transition: all 0.3s ease;
-      }
-
-      .thinking-step.active {
-        /* 현재 단계 강조 */
-      }
-
-      .thinking-step.completed {
-        opacity: 0.7;
-      }
-
-      .thinking-content {
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.3s ease;
-      }
-
-      .thinking-content.expanded {
-        max-height: 500px;
-        overflow-y: auto;
-      }
-
-      /* Chevron 애니메이션 */
-      .chevron-icon {
-        transition: transform 0.3s ease-in-out;
-      }
-
-      .chevron-icon.collapsed {
-        transform: rotate(-90deg);
-      }
-
-      /* 복사 버튼 스타일 */
-      .copy-code-btn {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        padding: 6px 10px;
-        background: #2a2a2a;
-        border: 1px solid #3a3a3a;
-        border-radius: 4px;
-        color: #a0a0a0;
-        font-size: 0.75rem;
-        cursor: pointer;
-        opacity: 0;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-
-      .markdown-content pre:hover .copy-code-btn {
-        opacity: 1;
-      }
-
-      .copy-code-btn:hover {
-        background: #3a3a3a;
-        color: #e5e5e5;
-      }
-
-      .copy-code-btn.copied {
-        background: #166534;
-        color: #86efac;
-        border-color: #16a34a;
-      }
-
-      .copy-message-btn {
-        padding: 6px 12px;
-        background: #2a2a2a;
-        border: 1px solid #3a3a3a;
-        border-radius: 6px;
-        color: #a0a0a0;
-        font-size: 0.75rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        margin-top: 8px;
-      }
-
-      .copy-message-btn:hover {
-        background: #3a3a3a;
-        color: #e5e5e5;
-      }
-
-      .copy-message-btn.copied {
-        background: #166534;
-        color: #86efac;
-        border-color: #16a34a;
-      }
-    </style>
-  </head>
-  <body class="bg-dark-bg text-dark-text dark">
-    <!-- Login Modal -->
-    <div id="loginModal" class="modal active">
-      <div
-        class="bg-dark-sidebar border border-dark-border rounded-xl p-8 max-w-md w-full mx-4"
-      >
-        <div class="text-center mb-6">
-          <div
-            class="w-16 h-16 mx-auto bg-dark-hover rounded-full flex items-center justify-center mb-4"
-          >
-            <i data-lucide="message-circle" class="w-8 h-8"></i>
-          </div>
-          <h2 class="text-2xl font-semibold mb-2">Versatile</h2>
-          <p class="text-dark-text-secondary">로그인하여 시작하세요</p>
-        </div>
-
-        <div id="loginForm">
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm mb-2">사용자명</label>
-              <input
-                type="text"
-                id="loginUsername"
-                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
-                placeholder="username"
-              />
-            </div>
-            <div>
-              <label class="block text-sm mb-2">비밀번호</label>
-              <input
-                type="password"
-                id="loginPassword"
-                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
-                placeholder="••••••••"
-              />
-            </div>
-            <button
-              id="loginBtn"
-              class="w-full px-4 py-2 bg-dark-text text-dark-bg rounded-lg hover:bg-dark-text/90 transition-colors font-medium"
-            >
-              로그인
-            </button>
-          </div>
-          <div class="mt-4 text-center text-sm">
-            <span class="text-dark-text-secondary">계정이 없으신가요?</span>
-            <button
-              id="showRegisterBtn"
-              class="text-dark-text hover:underline ml-1"
-            >
-              회원가입
-            </button>
-          </div>
-        </div>
-
-        <div id="registerForm" class="hidden">
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm mb-2">사용자명</label>
-              <input
-                type="text"
-                id="registerUsername"
-                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
-                placeholder="username"
-              />
-            </div>
-            <div>
-              <label class="block text-sm mb-2">이메일</label>
-              <input
-                type="email"
-                id="registerEmail"
-                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
-                placeholder="email@example.com"
-              />
-            </div>
-            <div>
-              <label class="block text-sm mb-2">표시 이름</label>
-              <input
-                type="text"
-                id="registerDisplayName"
-                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
-                placeholder="표시될 이름"
-              />
-            </div>
-            <div>
-              <label class="block text-sm mb-2">비밀번호</label>
-              <input
-                type="password"
-                id="registerPassword"
-                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
-                placeholder="••••••••"
-              />
-            </div>
-            <button
-              id="registerBtn"
-              class="w-full px-4 py-2 bg-dark-text text-dark-bg rounded-lg hover:bg-dark-text/90 transition-colors font-medium"
-            >
-              회원가입
-            </button>
-          </div>
-          <div class="mt-4 text-center text-sm">
-            <span class="text-dark-text-secondary"
-              >이미 계정이 있으신가요?</span
-            >
-            <button
-              id="showLoginBtn"
-              class="text-dark-text hover:underline ml-1"
-            >
-              로그인
-            </button>
-          </div>
-        </div>
-
-        <div
-          id="authError"
-          class="hidden mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm"
-        ></div>
-      </div>
-    </div>
-
-    <!-- Main App -->
-    <div id="mainApp" class="hidden flex h-screen overflow-hidden">
-      <!-- Sidebar -->
-      <div
-        class="w-64 bg-dark-sidebar border-r border-dark-border flex flex-col"
-      >
-        <!-- Logo -->
-        <div class="p-4 border-b border-dark-border">
-          <div class="flex items-center gap-2">
-            <i data-lucide="message-circle" class="w-5 h-5"></i>
-            <span class="text-lg font-semibold">Versatile</span>
-          </div>
-        </div>
-
-        <!-- New Chat Button -->
-        <div class="p-3">
-          <button
-            id="newChatBtn"
-            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dark-hover transition-colors"
-          >
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            <span class="text-sm">새 채팅</span>
-          </button>
-        </div>
-
-        <!-- Chat History -->
-        <div class="flex-1 overflow-y-auto px-3 space-y-1">
-          <div class="text-xs text-dark-text-secondary px-3 py-2 font-medium">
-            최근 항목
-          </div>
-          <div id="chatHistory">
-            <!-- Chat history items will be added here -->
-          </div>
-        </div>
-
-        <!-- Sidebar Footer -->
-        <div class="border-t border-dark-border p-3">
-          <button
-            id="userMenuBtn"
-            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dark-hover transition-colors text-sm"
-          >
-            <i data-lucide="user" class="w-4 h-4"></i>
-            <span id="userDisplayName">User</span>
-          </button>
-          <button
-            id="logoutBtn"
-            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dark-hover transition-colors text-sm mt-2 text-red-400"
-          >
-            <i data-lucide="log-out" class="w-4 h-4"></i>
-            <span>로그아웃</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Main Content -->
-      <div class="flex-1 flex flex-col">
-        <!-- Header -->
-        <div class="border-b border-dark-border p-4">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <button
-                id="sidebarToggle"
-                class="lg:hidden p-2 hover:bg-dark-hover rounded-lg"
-              >
-                <i data-lucide="menu" class="w-5 h-5"></i>
-              </button>
-              <h1 class="text-lg font-semibold" id="chatTitle">새 채팅</h1>
-            </div>
-            <div class="flex items-center gap-2">
-              <!-- Status Indicator -->
-              <div
-                class="flex items-center gap-2 px-3 py-1.5 bg-dark-hover border border-dark-border rounded-full"
-              >
-                <div
-                  class="w-2 h-2 rounded-full bg-green-500"
-                  id="statusDot"
-                ></div>
-                <span class="text-xs text-dark-text-secondary" id="statusText"
-                  >Connected</span
-                >
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Chat Container -->
-        <div
-          id="chatContainer"
-          class="flex-1 overflow-y-auto px-6 py-6 space-y-6"
-        >
-          <!-- Welcome Message -->
-          <div
-            id="welcomeMessage"
-            class="flex flex-col items-center justify-center h-full text-center"
-          >
-            <div class="max-w-md space-y-4">
-              <div
-                class="w-16 h-16 mx-auto bg-dark-hover rounded-full flex items-center justify-center"
-              >
-                <i
-                  data-lucide="sparkles"
-                  class="w-8 h-8 text-dark-text-secondary"
-                ></i>
-              </div>
-              <h2 class="text-2xl font-semibold">
-                Versatile에 오신 것을 환영합니다
-              </h2>
-              <p class="text-dark-text-secondary">
-                아래에 메시지를 입력하여 대화를 시작하세요.<br />
-                Chat, Tool, Think 모드 중 하나를 선택할 수 있습니다.
-              </p>
-            </div>
-          </div>
-
-          <!-- Typing Indicator -->
-          <div id="typingIndicator" class="hidden">
-            <div class="flex gap-4 max-w-3xl m-[0_auto]">
-              <div
-                class="w-8 h-8 rounded-full bg-dark-hover flex items-center justify-center flex-shrink-0"
-              >
-                <i data-lucide="bot" class="w-4 h-4"></i>
-              </div>
-              <div class="flex items-center gap-1 py-3">
-                <div
-                  class="typing-dot w-2 h-2 bg-dark-text-secondary rounded-full"
-                ></div>
-                <div
-                  class="typing-dot w-2 h-2 bg-dark-text-secondary rounded-full"
-                ></div>
-                <div
-                  class="typing-dot w-2 h-2 bg-dark-text-secondary rounded-full"
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Input Container -->
-        <div class="border-t border-dark-border p-4">
-          <div class="max-w-3xl mx-auto">
-            <div class="flex gap-2">
-              <button
-                class="mode-btn size-[48px] px-4 py-2 bg-dark-text/5 text-dark-text rounded-xl hover:bg-dark-text/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                data-mode="chat"
-              >
-                <i data-lucide="message-circle" class="w-4 h-4"></i>
-              </button>
-              <button
-                class="mode-btn size-[48px] px-4 py-2 bg-dark-text/5 text-dark-text rounded-xl hover:bg-dark-text/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                data-mode="tool"
-              >
-                <i data-lucide="toolbox" class="w-4 h-4"></i>
-              </button>
-              <button
-                class="mode-btn size-[48px] px-4 py-2 bg-dark-text/5 text-dark-text rounded-xl hover:bg-dark-text/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                data-mode="think"
-              >
-                <i data-lucide="sparkle" class="w-4 h-4"></i>
-              </button>
-              <div class="flex-1 relative">
-                <textarea
-                  id="messageInput"
-                  placeholder="메시지를 입력하세요..."
-                  rows="1"
-                  class="min-h-[48px] w-full px-4 py-3 bg-dark-hover border border-dark-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30 text-sm"
-                  style="max-height: 200px"
-                ></textarea>
-              </div>
-              <button
-                id="sendBtn"
-                class="size-[48px] px-4 py-2 bg-dark-text text-dark-bg rounded-xl hover:bg-dark-text/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                <i data-lucide="send" class="w-4 h-4"></i>
-              </button>
-            </div>
-            <div class="flex items-center justify-between mt-2 px-2">
-              <div class="text-xs text-dark-text-secondary">
-                <span id="charCount">0</span> characters
-              </div>
-              <button
-                id="clearBtn"
-                class="text-xs text-dark-text-secondary hover:text-dark-text transition-colors flex items-center gap-1"
-              >
-                <i data-lucide="trash-2" class="w-3 h-3"></i>
-                Clear chat
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <script>
-      // Initialize Lucide icons
-      lucide.createIcons();
-
-      // Configuration
-      const API_URL = "http://localhost:8000";
-      let authToken = localStorage.getItem("authToken") || null;
-      let currentUser = JSON.parse(
-        localStorage.getItem("currentUser") || "null",
-      );
-      let currentSessionId = null;
-      let currentMode = "chat";
-      let isProcessing = false;
-      let sessions = [];
-
-      // Configure marked.js
-      marked.setOptions({
-        highlight: function (code, lang) {
-          if (lang && hljs.getLanguage(lang)) {
-            try {
-              return hljs.highlight(code, { language: lang }).value;
-            } catch (e) {
-              console.error("Highlight error:", e);
+            body {
+                font-family:
+                    "Inter",
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    "Segoe UI",
+                    sans-serif;
             }
-          }
-          return hljs.highlightAuto(code).value;
-        },
-        breaks: true,
-        gfm: true,
-      });
 
-      // DOM elements
-      const loginModal = document.getElementById("loginModal");
-      const mainApp = document.getElementById("mainApp");
-      const loginForm = document.getElementById("loginForm");
-      const registerForm = document.getElementById("registerForm");
-      const authError = document.getElementById("authError");
+            ::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
 
-      const chatContainer = document.getElementById("chatContainer");
-      const messageInput = document.getElementById("messageInput");
-      const sendBtn = document.getElementById("sendBtn");
-      const clearBtn = document.getElementById("clearBtn");
-      const newChatBtn = document.getElementById("newChatBtn");
-      const logoutBtn = document.getElementById("logoutBtn");
-      const statusText = document.getElementById("statusText");
-      const statusDot = document.getElementById("statusDot");
-      const charCount = document.getElementById("charCount");
-      const modeBtns = document.querySelectorAll(".mode-btn");
-      const typingIndicator = document.getElementById("typingIndicator");
-      const welcomeMessage = document.getElementById("welcomeMessage");
-      const chatHistory = document.getElementById("chatHistory");
-      const chatTitle = document.getElementById("chatTitle");
-      const userDisplayName = document.getElementById("userDisplayName");
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
 
-      // Copy to clipboard function
-      async function copyToClipboard(text, button) {
-        try {
-          await navigator.clipboard.writeText(text);
-          const originalHTML = button.innerHTML;
-          button.innerHTML = '<i data-lucide="check" class="w-3 h-3"></i>';
-          button.classList.add("copied");
-          lucide.createIcons();
+            ::-webkit-scrollbar-thumb {
+                background: #3a3a3a;
+                border-radius: 4px;
+            }
 
-          setTimeout(() => {
-            button.innerHTML = originalHTML;
-            button.classList.remove("copied");
+            ::-webkit-scrollbar-thumb:hover {
+                background: #4a4a4a;
+            }
+
+            .markdown-content h1,
+            .markdown-content h2,
+            .markdown-content h3 {
+                margin-top: 1.5em;
+                margin-bottom: 0.5em;
+                font-weight: 600;
+            }
+
+            .markdown-content h1 {
+                font-size: 1.5em;
+            }
+            .markdown-content h2 {
+                font-size: 1.3em;
+            }
+            .markdown-content h3 {
+                font-size: 1.1em;
+            }
+
+            .markdown-content p {
+                margin-bottom: 1em;
+                line-height: 1.7;
+            }
+
+            .markdown-content ul,
+            .markdown-content ol {
+                margin-left: 1.5em;
+                margin-bottom: 1em;
+            }
+
+            .markdown-content ul {
+                list-style: circle !important;
+            }
+
+            .markdown-content ol {
+                list-style: decimal !important;
+            }
+
+            .markdown-content li {
+                margin-bottom: 0.3em;
+            }
+
+            .markdown-content code {
+                font-family: "Consolas", "Monaco", "Courier New", monospace;
+                font-size: 0.875em;
+                padding: 2px 6px;
+                border-radius: 3px;
+                background: #2a2a2a;
+                color: #e5e5e5;
+            }
+
+            .markdown-content pre {
+                margin: 1em 0;
+                border-radius: 6px;
+                overflow: hidden;
+                background: #1e1e1e;
+                border: 1px solid #2a2a2a;
+                position: relative;
+            }
+
+            .markdown-content pre code {
+                display: block;
+                padding: 16px;
+                overflow-x: auto;
+                background: transparent;
+                font-size: 0.875em;
+                line-height: 1.5;
+            }
+
+            .markdown-content blockquote {
+                border-left: 3px solid #3a3a3a;
+                padding-left: 16px;
+                margin: 1em 0;
+                color: #a0a0a0;
+            }
+
+            .markdown-content a {
+                color: oklch(76.9% 0.188 70.08);
+                text-decoration: none;
+            }
+
+            .markdown-content a:hover {
+                text-decoration: underline;
+            }
+
+            .markdown-content table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 1em 0;
+            }
+
+            .markdown-content th,
+            .markdown-content td {
+                border: 1px solid #2a2a2a;
+                padding: 8px 12px;
+                text-align: left;
+            }
+
+            .markdown-content th {
+                background: #252525;
+                font-weight: 600;
+            }
+
+            .markdown-content hr {
+                border: none;
+                border-top: 1px solid #3a3a3a;
+                margin: 1em 0;
+            }
+
+            @keyframes typingBounce {
+                0%,
+                60%,
+                100% {
+                    transform: translateY(0);
+                }
+                30% {
+                    transform: translateY(-6px);
+                }
+            }
+
+            .typing-dot {
+                animation: typingBounce 1.4s ease-in-out infinite;
+            }
+
+            .typing-dot:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+
+            .typing-dot:nth-child(3) {
+                animation-delay: 0.4s;
+            }
+
+            .session-active {
+                background-color: #252525;
+                border-left: 2px solid #8b7355;
+                border-top-left-radius: 0 !important;
+                border-bottom-left-radius: 0 !important;
+            }
+
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 1000;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .modal.active {
+                display: flex;
+            }
+
+            /* 사고 과정 애니메이션 */
+            .thinking-step {
+                transition: all 0.3s ease;
+            }
+
+            .thinking-step.active {
+                /* 현재 단계 강조 */
+            }
+
+            .thinking-step.completed {
+                opacity: 0.7;
+            }
+
+            .thinking-content {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+            }
+
+            .thinking-content.expanded {
+                max-height: 500px;
+                overflow-y: auto;
+            }
+
+            /* Chevron 애니메이션 */
+            .chevron-icon {
+                transition: transform 0.3s ease-in-out;
+            }
+
+            .chevron-icon.collapsed {
+                transform: rotate(-90deg);
+            }
+
+            /* 복사 버튼 스타일 */
+            .copy-code-btn {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                padding: 6px 10px;
+                background: #2a2a2a;
+                border: 1px solid #3a3a3a;
+                border-radius: 4px;
+                color: #a0a0a0;
+                font-size: 0.75rem;
+                cursor: pointer;
+                opacity: 0;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .markdown-content pre:hover .copy-code-btn {
+                opacity: 1;
+            }
+
+            .copy-code-btn:hover {
+                background: #3a3a3a;
+                color: #e5e5e5;
+            }
+
+            .copy-code-btn.copied {
+                background: #166534;
+                color: #86efac;
+                border-color: #16a34a;
+            }
+
+            .copy-message-btn {
+                padding: 6px 12px;
+                background: #2a2a2a;
+                border: 1px solid #3a3a3a;
+                border-radius: 6px;
+                color: #a0a0a0;
+                font-size: 0.75rem;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                margin-top: 8px;
+            }
+
+            .copy-message-btn:hover {
+                background: #3a3a3a;
+                color: #e5e5e5;
+            }
+
+            .copy-message-btn.copied {
+                background: #166534;
+                color: #86efac;
+                border-color: #16a34a;
+            }
+        </style>
+    </head>
+    <body class="bg-dark-bg text-dark-text dark">
+        <!-- Login Modal -->
+        <div id="loginModal" class="modal active">
+            <div
+                class="bg-dark-sidebar border border-dark-border rounded-xl p-8 max-w-md w-full mx-4"
+            >
+                <div class="text-center mb-6">
+                    <div
+                        class="w-16 h-16 mx-auto bg-dark-hover rounded-full flex items-center justify-center mb-4"
+                    >
+                        <i data-lucide="message-circle" class="w-8 h-8"></i>
+                    </div>
+                    <h2 class="text-2xl font-semibold mb-2">Versatile</h2>
+                    <p class="text-dark-text-secondary">
+                        로그인하여 시작하세요
+                    </p>
+                </div>
+
+                <div id="loginForm">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm mb-2">사용자명</label>
+                            <input
+                                type="text"
+                                id="loginUsername"
+                                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
+                                placeholder="username"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm mb-2">비밀번호</label>
+                            <input
+                                type="password"
+                                id="loginPassword"
+                                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
+                                placeholder="••••••••"
+                            />
+                        </div>
+                        <button
+                            id="loginBtn"
+                            class="w-full px-4 py-2 bg-dark-text text-dark-bg rounded-lg hover:bg-dark-text/90 transition-colors font-medium"
+                        >
+                            로그인
+                        </button>
+                    </div>
+                    <div class="mt-4 text-center text-sm">
+                        <span class="text-dark-text-secondary"
+                            >계정이 없으신가요?</span
+                        >
+                        <button
+                            id="showRegisterBtn"
+                            class="text-dark-text hover:underline ml-1"
+                        >
+                            회원가입
+                        </button>
+                    </div>
+                </div>
+
+                <div id="registerForm" class="hidden">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm mb-2">사용자명</label>
+                            <input
+                                type="text"
+                                id="registerUsername"
+                                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
+                                placeholder="username"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm mb-2">이메일</label>
+                            <input
+                                type="email"
+                                id="registerEmail"
+                                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
+                                placeholder="email@example.com"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm mb-2">표시 이름</label>
+                            <input
+                                type="text"
+                                id="registerDisplayName"
+                                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
+                                placeholder="표시될 이름"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm mb-2">비밀번호</label>
+                            <input
+                                type="password"
+                                id="registerPassword"
+                                class="w-full px-4 py-2 bg-dark-hover border border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30"
+                                placeholder="••••••••"
+                            />
+                        </div>
+                        <button
+                            id="registerBtn"
+                            class="w-full px-4 py-2 bg-dark-text text-dark-bg rounded-lg hover:bg-dark-text/90 transition-colors font-medium"
+                        >
+                            회원가입
+                        </button>
+                    </div>
+                    <div class="mt-4 text-center text-sm">
+                        <span class="text-dark-text-secondary"
+                            >이미 계정이 있으신가요?</span
+                        >
+                        <button
+                            id="showLoginBtn"
+                            class="text-dark-text hover:underline ml-1"
+                        >
+                            로그인
+                        </button>
+                    </div>
+                </div>
+
+                <div
+                    id="authError"
+                    class="hidden mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm"
+                ></div>
+            </div>
+        </div>
+
+        <!-- Main App -->
+        <div id="mainApp" class="hidden flex h-screen overflow-hidden">
+            <!-- Sidebar -->
+            <div
+                class="w-64 bg-dark-sidebar border-r border-dark-border flex flex-col"
+            >
+                <!-- Logo -->
+                <div class="p-4 border-b border-dark-border">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i>
+                        <span class="text-lg font-semibold">Versatile</span>
+                    </div>
+                </div>
+
+                <!-- New Chat Button -->
+                <div class="p-3">
+                    <button
+                        id="newChatBtn"
+                        class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dark-hover transition-colors"
+                    >
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span class="text-sm">새 채팅</span>
+                    </button>
+                </div>
+
+                <!-- Chat History -->
+                <div class="flex-1 overflow-y-auto px-3 space-y-1">
+                    <div
+                        class="text-xs text-dark-text-secondary px-3 py-2 font-medium"
+                    >
+                        최근 항목
+                    </div>
+                    <div id="chatHistory">
+                        <!-- Chat history items will be added here -->
+                    </div>
+                </div>
+
+                <!-- Sidebar Footer -->
+                <div class="border-t border-dark-border p-3">
+                    <button
+                        id="userMenuBtn"
+                        class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dark-hover transition-colors text-sm"
+                    >
+                        <i data-lucide="user" class="w-4 h-4"></i>
+                        <span id="userDisplayName">User</span>
+                    </button>
+                    <button
+                        id="logoutBtn"
+                        class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dark-hover transition-colors text-sm mt-2 text-red-400"
+                    >
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                        <span>로그아웃</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 flex flex-col">
+                <!-- Header -->
+                <div class="border-b border-dark-border p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <button
+                                id="sidebarToggle"
+                                class="lg:hidden p-2 hover:bg-dark-hover rounded-lg"
+                            >
+                                <i data-lucide="menu" class="w-5 h-5"></i>
+                            </button>
+                            <h1 class="text-lg font-semibold" id="chatTitle">
+                                새 채팅
+                            </h1>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <!-- Status Indicator -->
+                            <div
+                                class="flex items-center gap-2 px-3 py-1.5 bg-dark-hover border border-dark-border rounded-full"
+                            >
+                                <div
+                                    class="w-2 h-2 rounded-full bg-green-500"
+                                    id="statusDot"
+                                ></div>
+                                <span
+                                    class="text-xs text-dark-text-secondary"
+                                    id="statusText"
+                                    >Connected</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Container -->
+                <div
+                    id="chatContainer"
+                    class="flex-1 overflow-y-auto px-6 py-6 space-y-6"
+                >
+                    <!-- Welcome Message -->
+                    <div
+                        id="welcomeMessage"
+                        class="flex flex-col items-center justify-center h-full text-center"
+                    >
+                        <div class="max-w-md space-y-4">
+                            <div
+                                class="w-16 h-16 mx-auto bg-dark-hover rounded-full flex items-center justify-center"
+                            >
+                                <i
+                                    data-lucide="sparkles"
+                                    class="w-8 h-8 text-dark-text-secondary"
+                                ></i>
+                            </div>
+                            <h2 class="text-2xl font-semibold">
+                                Versatile에 오신 것을 환영합니다
+                            </h2>
+                            <p class="text-dark-text-secondary">
+                                아래에 메시지를 입력하여 대화를 시작하세요.<br />
+                                Chat, Tool, Think 모드 중 하나를 선택할 수
+                                있습니다.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Typing Indicator -->
+                    <div id="typingIndicator" class="hidden">
+                        <div class="flex gap-4 max-w-3xl m-[0_auto]">
+                            <div
+                                class="w-8 h-8 rounded-full bg-dark-hover flex items-center justify-center flex-shrink-0"
+                            >
+                                <i data-lucide="bot" class="w-4 h-4"></i>
+                            </div>
+                            <div class="flex items-center gap-1 py-3">
+                                <div
+                                    class="typing-dot w-2 h-2 bg-dark-text-secondary rounded-full"
+                                ></div>
+                                <div
+                                    class="typing-dot w-2 h-2 bg-dark-text-secondary rounded-full"
+                                ></div>
+                                <div
+                                    class="typing-dot w-2 h-2 bg-dark-text-secondary rounded-full"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Container -->
+                <div class="border-t border-dark-border p-4">
+                    <div class="max-w-3xl mx-auto">
+                        <div class="flex gap-2">
+                            <button
+                                class="mode-btn size-[48px] px-4 py-2 bg-dark-text/5 text-dark-text rounded-xl hover:bg-dark-text/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                data-mode="chat"
+                            >
+                                <i
+                                    data-lucide="message-circle"
+                                    class="w-4 h-4"
+                                ></i>
+                            </button>
+                            <button
+                                class="mode-btn size-[48px] px-4 py-2 bg-dark-text/5 text-dark-text rounded-xl hover:bg-dark-text/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                data-mode="tool"
+                            >
+                                <i data-lucide="toolbox" class="w-4 h-4"></i>
+                            </button>
+                            <button
+                                class="mode-btn size-[48px] px-4 py-2 bg-dark-text/5 text-dark-text rounded-xl hover:bg-dark-text/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                data-mode="think"
+                            >
+                                <i data-lucide="sparkle" class="w-4 h-4"></i>
+                            </button>
+                            <div class="flex-1 relative">
+                                <textarea
+                                    id="messageInput"
+                                    placeholder="메시지를 입력하세요..."
+                                    rows="1"
+                                    class="min-h-[48px] w-full px-4 py-3 bg-dark-hover border border-dark-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-dark-text-secondary/30 text-sm"
+                                    style="max-height: 200px"
+                                ></textarea>
+                            </div>
+                            <button
+                                id="sendBtn"
+                                class="size-[48px] px-4 py-2 bg-dark-text text-dark-bg rounded-xl hover:bg-dark-text/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                <i data-lucide="send" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div
+                            class="flex items-center justify-between mt-2 px-2"
+                        >
+                            <div class="text-xs text-dark-text-secondary">
+                                <span id="charCount">0</span> characters
+                            </div>
+                            <button
+                                id="clearBtn"
+                                class="text-xs text-dark-text-secondary hover:text-dark-text transition-colors flex items-center gap-1"
+                            >
+                                <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                Clear chat
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Initialize Lucide icons
             lucide.createIcons();
-          }, 2000);
-        } catch (err) {
-          console.error("Failed to copy:", err);
-        }
-      }
 
-      // Add copy button to code blocks
-      function addCopyButtonToCode(pre) {
-        if (pre.querySelector(".copy-code-btn")) return;
+            // Configuration
+            const API_URL = "http://localhost:8000";
+            let authToken = localStorage.getItem("authToken") || null;
+            let currentUser = JSON.parse(
+                localStorage.getItem("currentUser") || "null",
+            );
+            let currentSessionId = null;
+            let currentMode = "chat";
+            let isProcessing = false;
+            let sessions = [];
 
-        const button = document.createElement("button");
-        button.className = "copy-code-btn !p-2";
-        button.innerHTML = '<i data-lucide="copy" class="w-3 h-3"></i>';
+            // Configure marked.js
+            marked.setOptions({
+                highlight: function (code, lang) {
+                    if (lang && hljs.getLanguage(lang)) {
+                        try {
+                            return hljs.highlight(code, { language: lang })
+                                .value;
+                        } catch (e) {
+                            console.error("Highlight error:", e);
+                        }
+                    }
+                    return hljs.highlightAuto(code).value;
+                },
+                breaks: true,
+                gfm: true,
+            });
 
-        button.addEventListener("click", () => {
-          const code = pre.querySelector("code");
-          copyToClipboard(code.textContent, button);
-        });
+            // DOM elements
+            const loginModal = document.getElementById("loginModal");
+            const mainApp = document.getElementById("mainApp");
+            const loginForm = document.getElementById("loginForm");
+            const registerForm = document.getElementById("registerForm");
+            const authError = document.getElementById("authError");
 
-        pre.style.position = "relative";
-        pre.appendChild(button);
-        lucide.createIcons();
-      }
+            const chatContainer = document.getElementById("chatContainer");
+            const messageInput = document.getElementById("messageInput");
+            const sendBtn = document.getElementById("sendBtn");
+            const clearBtn = document.getElementById("clearBtn");
+            const newChatBtn = document.getElementById("newChatBtn");
+            const logoutBtn = document.getElementById("logoutBtn");
+            const statusText = document.getElementById("statusText");
+            const statusDot = document.getElementById("statusDot");
+            const charCount = document.getElementById("charCount");
+            const modeBtns = document.querySelectorAll(".mode-btn");
+            const typingIndicator = document.getElementById("typingIndicator");
+            const welcomeMessage = document.getElementById("welcomeMessage");
+            const chatHistory = document.getElementById("chatHistory");
+            const chatTitle = document.getElementById("chatTitle");
+            const userDisplayName = document.getElementById("userDisplayName");
 
-      // Add copy button to assistant message
-      function addCopyButtonToMessage(contentDiv, rawText) {
-        if (contentDiv.querySelector(".copy-message-btn")) return;
+            // Copy to clipboard function
+            async function copyToClipboard(text, button) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    const originalHTML = button.innerHTML;
+                    button.innerHTML =
+                        '<i data-lucide="check" class="w-3 h-3"></i>';
+                    button.classList.add("copied");
+                    lucide.createIcons();
 
-        const button = document.createElement("button");
-        button.className = "copy-message-btn !p-2";
-        button.innerHTML = '<i data-lucide="copy" class="w-3 h-3"></i>';
+                    setTimeout(() => {
+                        button.innerHTML = originalHTML;
+                        button.classList.remove("copied");
+                        lucide.createIcons();
+                    }, 2000);
+                } catch (err) {
+                    console.error("Failed to copy:", err);
+                }
+            }
 
-        button.addEventListener("click", () => {
-          copyToClipboard(rawText, button);
-        });
+            // Add copy button to code blocks
+            function addCopyButtonToCode(pre) {
+                if (pre.querySelector(".copy-code-btn")) return;
 
-        contentDiv.appendChild(button);
-        lucide.createIcons();
-      }
+                const button = document.createElement("button");
+                button.className = "copy-code-btn !p-2";
+                button.innerHTML = '<i data-lucide="copy" class="w-3 h-3"></i>';
 
-      // Auth Functions
-      function showAuthError(message) {
-        authError.textContent = message;
-        authError.classList.remove("hidden");
-        setTimeout(() => authError.classList.add("hidden"), 5000);
-      }
+                button.addEventListener("click", () => {
+                    const code = pre.querySelector("code");
+                    copyToClipboard(code.textContent, button);
+                });
 
-      async function login(username, password) {
-        try {
-          const response = await fetch(`${API_URL}/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password }),
-          });
+                pre.style.position = "relative";
+                pre.appendChild(button);
+                lucide.createIcons();
+            }
 
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || "로그인 실패");
-          }
+            // Add copy button to assistant message
+            function addCopyButtonToMessage(contentDiv, rawText) {
+                if (contentDiv.querySelector(".copy-message-btn")) return;
 
-          const data = await response.json();
-          authToken = data.access_token;
-          currentUser = data.user;
+                const button = document.createElement("button");
+                button.className = "copy-message-btn !p-2";
+                button.innerHTML = '<i data-lucide="copy" class="w-3 h-3"></i>';
 
-          localStorage.setItem("authToken", authToken);
-          localStorage.setItem("currentUser", JSON.stringify(currentUser));
+                button.addEventListener("click", () => {
+                    copyToClipboard(rawText, button);
+                });
 
-          showMainApp();
-        } catch (error) {
-          showAuthError(error.message);
-        }
-      }
+                contentDiv.appendChild(button);
+                lucide.createIcons();
+            }
 
-      async function register(username, email, password, displayName) {
-        try {
-          const response = await fetch(`${API_URL}/auth/register`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              username,
-              email,
-              password,
-              display_name: displayName || username,
-            }),
-          });
+            // Auth Functions
+            function showAuthError(message) {
+                authError.textContent = message;
+                authError.classList.remove("hidden");
+                setTimeout(() => authError.classList.add("hidden"), 5000);
+            }
 
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || "회원가입 실패");
-          }
+            async function login(username, password) {
+                try {
+                    const response = await fetch(`${API_URL}/auth/login`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username, password }),
+                    });
 
-          const data = await response.json();
-          authToken = data.access_token;
-          currentUser = data.user;
-
-          localStorage.setItem("authToken", authToken);
-          localStorage.setItem("currentUser", JSON.stringify(currentUser));
-
-          showMainApp();
-        } catch (error) {
-          showAuthError(error.message);
-        }
-      }
-
-      function logout() {
-        authToken = null;
-        currentUser = null;
-        currentSessionId = null;
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("currentUser");
-        loginModal.classList.add("active");
-        mainApp.classList.add("hidden");
-      }
-
-      function showMainApp() {
-        loginModal.classList.remove("active");
-        mainApp.classList.remove("hidden");
-        userDisplayName.textContent =
-          currentUser.display_name || currentUser.username;
-        loadSessions();
-        lucide.createIcons();
-      }
-
-      // Auth Event Listeners
-      document.getElementById("loginBtn").addEventListener("click", () => {
-        const username = document.getElementById("loginUsername").value.trim();
-        const password = document.getElementById("loginPassword").value;
-        if (username && password) {
-          login(username, password);
-        }
-      });
-
-      document.getElementById("registerBtn").addEventListener("click", () => {
-        const username = document
-          .getElementById("registerUsername")
-          .value.trim();
-        const email = document.getElementById("registerEmail").value.trim();
-        const password = document.getElementById("registerPassword").value;
-        const displayName = document
-          .getElementById("registerDisplayName")
-          .value.trim();
-
-        if (username && email && password) {
-          register(username, email, password, displayName);
-        }
-      });
-
-      document
-        .getElementById("showRegisterBtn")
-        .addEventListener("click", () => {
-          loginForm.classList.add("hidden");
-          registerForm.classList.remove("hidden");
-          authError.classList.add("hidden");
-        });
-
-      document.getElementById("showLoginBtn").addEventListener("click", () => {
-        registerForm.classList.add("hidden");
-        loginForm.classList.remove("hidden");
-        authError.classList.add("hidden");
-      });
-
-      logoutBtn.addEventListener("click", logout);
-
-      // Session Management
-      async function loadSessions() {
-        try {
-          const response = await fetch(`${API_URL}/sessions`, {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          });
-
-          if (!response.ok) throw new Error("세션 로드 실패");
-
-          sessions = await response.json();
-          renderChatHistory();
-        } catch (error) {
-          console.error("Load sessions error:", error);
-        }
-      }
-
-      async function createNewSession() {
-        if (isProcessing) return;
-
-        currentSessionId = null;
-        clearChat();
-        chatTitle.textContent = "새 채팅";
-        renderChatHistory();
-      }
-
-      async function switchSession(sessionId, title) {
-        if (isProcessing) return;
-
-        currentSessionId = sessionId;
-        chatTitle.textContent = title;
-        clearChat();
-        await loadSessionHistory(sessionId);
-        renderChatHistory();
-      }
-
-      async function loadSessionHistory(sessionId) {
-        try {
-          const response = await fetch(`${API_URL}/history/${sessionId}`, {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          });
-
-          if (!response.ok) return;
-
-          const data = await response.json();
-
-          if (data.history && data.history.length > 0) {
-            data.history.forEach((msg) => {
-              if (msg.role === "user") {
-                addMessage(msg.role, msg.content);
-              } else if (msg.role === "assistant") {
-                // Think 모드였고 thinking_process가 있는 경우
-                if (msg.thinking_process && msg.thinking_process.length > 0) {
-                  const thinkingMessage = createThinkingMessage();
-
-                  // 각 사고 단계 렌더링
-                  msg.thinking_process.forEach((step, index) => {
-                    const stepElement = addThinkingStep(
-                      thinkingMessage.thinkingContainer,
-                      step.todo,
-                    );
-
-                    // 사고 과정 내용 추가
-                    if (step.content) {
-                      const wrapper = stepElement.contentWrapper;
-                      stepElement.contentDiv.dataset.rawText = step.content;
-
-                      try {
-                        wrapper.innerHTML = marked.parse(step.content);
-                        wrapper
-                          .querySelectorAll("pre code")
-                          .forEach((block) => {
-                            hljs.highlightElement(block);
-                            block.dataset.highlighted = "yes";
-                          });
-
-                        // 코드 블럭에 복사 버튼 추가
-                        wrapper.querySelectorAll("pre").forEach((pre) => {
-                          addCopyButtonToCode(pre);
-                        });
-                      } catch (e) {
-                        stepElement.contentDiv.textContent = step.content;
-                      }
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.detail || "로그인 실패");
                     }
 
-                    // 완료된 단계로 표시 (접힌 상태로)
-                    completeThinkingStep(stepElement.stepDiv, true);
-                  });
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    currentUser = data.user;
 
-                  // 최종 응답 추가
-                  if (msg.content) {
-                    const finalResponse = document.createElement("div");
-                    finalResponse.className =
-                      "prose prose-invert max-w-none markdown-content";
-                    finalResponse.innerHTML = marked.parse(msg.content);
-                    finalResponse
-                      .querySelectorAll("pre code")
-                      .forEach((block) => {
-                        hljs.highlightElement(block);
-                        block.dataset.highlighted = "yes";
-                      });
+                    localStorage.setItem("authToken", authToken);
+                    localStorage.setItem(
+                        "currentUser",
+                        JSON.stringify(currentUser),
+                    );
 
-                    // 코드 블럭에 복사 버튼 추가
-                    finalResponse.querySelectorAll("pre").forEach((pre) => {
-                      addCopyButtonToCode(pre);
+                    showMainApp();
+                } catch (error) {
+                    showAuthError(error.message);
+                }
+            }
+
+            async function register(username, email, password, displayName) {
+                try {
+                    const response = await fetch(`${API_URL}/auth/register`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            username,
+                            email,
+                            password,
+                            display_name: displayName || username,
+                        }),
                     });
 
-                    thinkingMessage.contentDiv.appendChild(finalResponse);
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.detail || "회원가입 실패");
+                    }
 
-                    // 메시지 복사 버튼 추가
-                    addCopyButtonToMessage(
-                      thinkingMessage.contentDiv,
-                      msg.content,
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    currentUser = data.user;
+
+                    localStorage.setItem("authToken", authToken);
+                    localStorage.setItem(
+                        "currentUser",
+                        JSON.stringify(currentUser),
                     );
-                  }
+
+                    showMainApp();
+                } catch (error) {
+                    showAuthError(error.message);
                 }
-                // Tool 모드였고 tool_usage가 있는 경우
-                else if (msg.tool_usage && msg.tool_usage.length > 0) {
-                  const toolMessage = createToolMessage();
+            }
 
-                  // 각 도구 사용 렌더링
-                  msg.tool_usage.forEach((toolUse) => {
-                    addToolUsage(
-                      toolMessage.toolContainer,
-                      toolUse.tool_name,
-                      toolUse.tool_input,
-                      toolUse.tool_output,
-                    );
-                  });
+            function logout() {
+                authToken = null;
+                currentUser = null;
+                currentSessionId = null;
+                localStorage.removeItem("authToken");
+                localStorage.removeItem("currentUser");
+                loginModal.classList.add("active");
+                mainApp.classList.add("hidden");
+            }
 
-                  // 최종 응답 추가 (hr 뒤에)
-                  if (msg.content) {
-                    const finalResponse = document.createElement("div");
-                    finalResponse.className =
-                      "prose prose-invert max-w-none markdown-content";
-                    finalResponse.innerHTML = marked.parse(msg.content);
-                    finalResponse
-                      .querySelectorAll("pre code")
-                      .forEach((block) => {
-                        hljs.highlightElement(block);
-                        block.dataset.highlighted = "yes";
-                      });
+            function showMainApp() {
+                loginModal.classList.remove("active");
+                mainApp.classList.remove("hidden");
+                userDisplayName.textContent =
+                    currentUser.display_name || currentUser.username;
+                loadSessions();
+                lucide.createIcons();
+            }
 
-                    // 코드 블럭에 복사 버튼 추가
-                    finalResponse.querySelectorAll("pre").forEach((pre) => {
-                      addCopyButtonToCode(pre);
+            // Auth Event Listeners
+            document
+                .getElementById("loginBtn")
+                .addEventListener("click", () => {
+                    const username = document
+                        .getElementById("loginUsername")
+                        .value.trim();
+                    const password =
+                        document.getElementById("loginPassword").value;
+                    if (username && password) {
+                        login(username, password);
+                    }
+                });
+
+            document
+                .getElementById("registerBtn")
+                .addEventListener("click", () => {
+                    const username = document
+                        .getElementById("registerUsername")
+                        .value.trim();
+                    const email = document
+                        .getElementById("registerEmail")
+                        .value.trim();
+                    const password =
+                        document.getElementById("registerPassword").value;
+                    const displayName = document
+                        .getElementById("registerDisplayName")
+                        .value.trim();
+
+                    if (username && email && password) {
+                        register(username, email, password, displayName);
+                    }
+                });
+
+            document
+                .getElementById("showRegisterBtn")
+                .addEventListener("click", () => {
+                    loginForm.classList.add("hidden");
+                    registerForm.classList.remove("hidden");
+                    authError.classList.add("hidden");
+                });
+
+            document
+                .getElementById("showLoginBtn")
+                .addEventListener("click", () => {
+                    registerForm.classList.add("hidden");
+                    loginForm.classList.remove("hidden");
+                    authError.classList.add("hidden");
+                });
+
+            logoutBtn.addEventListener("click", logout);
+
+            // Session Management
+            async function loadSessions() {
+                try {
+                    const response = await fetch(`${API_URL}/sessions`, {
+                        headers: {
+                            Authorization: `Bearer ${authToken}`,
+                        },
                     });
 
-                    toolMessage.toolContainer.appendChild(finalResponse);
+                    if (!response.ok) throw new Error("세션 로드 실패");
 
-                    // 메시지 복사 버튼 추가
-                    addCopyButtonToMessage(finalResponse, msg.content);
-                  }
-                } else {
-                  // 일반 메시지 (Chat 모드)
-                  addMessage(msg.role, msg.content, true);
+                    sessions = await response.json();
+                    renderChatHistory();
+                } catch (error) {
+                    console.error("Load sessions error:", error);
                 }
-              }
+            }
+
+            async function createNewSession() {
+                if (isProcessing) return;
+
+                currentSessionId = null;
+                clearChat();
+                chatTitle.textContent = "새 채팅";
+                renderChatHistory();
+            }
+
+            async function switchSession(sessionId, title) {
+                if (isProcessing) return;
+
+                currentSessionId = sessionId;
+                chatTitle.textContent = title;
+                clearChat();
+                await loadSessionHistory(sessionId);
+                renderChatHistory();
+            }
+
+            async function loadSessionHistory(sessionId) {
+                try {
+                    const response = await fetch(
+                        `${API_URL}/history/${sessionId}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${authToken}`,
+                            },
+                        },
+                    );
+
+                    if (!response.ok) return;
+
+                    const data = await response.json();
+
+                    if (data.history && data.history.length > 0) {
+                        data.history.forEach((msg) => {
+                            if (msg.role === "user") {
+                                addMessage(msg.role, msg.content);
+                            } else if (msg.role === "assistant") {
+                                // Think 모드였고 thinking_process가 있는 경우
+                                if (
+                                    msg.thinking_process &&
+                                    msg.thinking_process.length > 0
+                                ) {
+                                    const thinkingMessage =
+                                        createThinkingMessage();
+
+                                    // 각 사고 단계 렌더링
+                                    msg.thinking_process.forEach(
+                                        (step, index) => {
+                                            const stepElement = addThinkingStep(
+                                                thinkingMessage.thinkingContainer,
+                                                step.todo,
+                                            );
+
+                                            // 사고 과정 내용 추가
+                                            if (step.content) {
+                                                const wrapper =
+                                                    stepElement.contentWrapper;
+                                                stepElement.contentDiv.dataset.rawText =
+                                                    step.content;
+
+                                                try {
+                                                    wrapper.innerHTML =
+                                                        marked.parse(
+                                                            step.content,
+                                                        );
+                                                    wrapper
+                                                        .querySelectorAll(
+                                                            "pre code",
+                                                        )
+                                                        .forEach((block) => {
+                                                            hljs.highlightElement(
+                                                                block,
+                                                            );
+                                                            block.dataset.highlighted =
+                                                                "yes";
+                                                        });
+
+                                                    // 코드 블럭에 복사 버튼 추가
+                                                    wrapper
+                                                        .querySelectorAll("pre")
+                                                        .forEach((pre) => {
+                                                            addCopyButtonToCode(
+                                                                pre,
+                                                            );
+                                                        });
+                                                } catch (e) {
+                                                    stepElement.contentDiv.textContent =
+                                                        step.content;
+                                                }
+                                            }
+
+                                            // 완료된 단계로 표시 (접힌 상태로)
+                                            completeThinkingStep(
+                                                stepElement.stepDiv,
+                                                true,
+                                            );
+                                        },
+                                    );
+
+                                    // 최종 응답 추가
+                                    if (msg.content) {
+                                        const finalResponse =
+                                            document.createElement("div");
+                                        finalResponse.className =
+                                            "prose prose-invert max-w-none markdown-content";
+                                        finalResponse.innerHTML = marked.parse(
+                                            msg.content,
+                                        );
+                                        finalResponse
+                                            .querySelectorAll("pre code")
+                                            .forEach((block) => {
+                                                hljs.highlightElement(block);
+                                                block.dataset.highlighted =
+                                                    "yes";
+                                            });
+
+                                        // 코드 블럭에 복사 버튼 추가
+                                        finalResponse
+                                            .querySelectorAll("pre")
+                                            .forEach((pre) => {
+                                                addCopyButtonToCode(pre);
+                                            });
+
+                                        thinkingMessage.contentDiv.appendChild(
+                                            finalResponse,
+                                        );
+
+                                        // 메시지 복사 버튼 추가
+                                        addCopyButtonToMessage(
+                                            thinkingMessage.contentDiv,
+                                            msg.content,
+                                        );
+                                    }
+                                }
+                                // Tool 모드였고 tool_usage가 있는 경우
+                                else if (
+                                    msg.tool_usage &&
+                                    msg.tool_usage.length > 0
+                                ) {
+                                    const toolMessage = createToolMessage();
+
+                                    // 각 도구 사용 렌더링
+                                    msg.tool_usage.forEach((toolUse) => {
+                                        addToolUsage(
+                                            toolMessage.toolContainer,
+                                            toolUse.tool_name,
+                                            toolUse.tool_input,
+                                            toolUse.tool_output,
+                                        );
+                                    });
+
+                                    // 최종 응답 추가 (hr 뒤에)
+                                    if (msg.content) {
+                                        const finalResponse =
+                                            document.createElement("div");
+                                        finalResponse.className =
+                                            "prose prose-invert max-w-none markdown-content";
+                                        finalResponse.innerHTML = marked.parse(
+                                            msg.content,
+                                        );
+                                        finalResponse
+                                            .querySelectorAll("pre code")
+                                            .forEach((block) => {
+                                                hljs.highlightElement(block);
+                                                block.dataset.highlighted =
+                                                    "yes";
+                                            });
+
+                                        // 코드 블럭에 복사 버튼 추가
+                                        finalResponse
+                                            .querySelectorAll("pre")
+                                            .forEach((pre) => {
+                                                addCopyButtonToCode(pre);
+                                            });
+
+                                        toolMessage.toolContainer.appendChild(
+                                            finalResponse,
+                                        );
+
+                                        // 메시지 복사 버튼 추가
+                                        addCopyButtonToMessage(
+                                            finalResponse,
+                                            msg.content,
+                                        );
+                                    }
+                                } else {
+                                    // 일반 메시지 (Chat 모드)
+                                    addMessage(msg.role, msg.content, true);
+                                }
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error("Load history error:", error);
+                }
+            }
+
+            function renderChatHistory() {
+                chatHistory.innerHTML = "";
+
+                sessions.forEach((session) => {
+                    const historyItem = document.createElement("button");
+                    historyItem.className =
+                        "w-full text-left px-3 py-2 rounded-lg hover:bg-dark-hover transition-colors text-sm truncate";
+
+                    if (session.session_id === currentSessionId) {
+                        historyItem.classList.add("session-active");
+                    }
+
+                    historyItem.textContent = session.title;
+                    historyItem.onclick = () => {
+                        switchSession(session.session_id, session.title);
+                    };
+
+                    chatHistory.appendChild(historyItem);
+                });
+
+                lucide.createIcons();
+            }
+
+            // Auto-resize textarea
+            messageInput.addEventListener("input", function () {
+                this.style.height = "auto";
+                this.style.height = Math.min(this.scrollHeight, 200) + "px";
+                charCount.textContent = this.value.length;
             });
-          }
-        } catch (error) {
-          console.error("Load history error:", error);
-        }
-      }
 
-      function renderChatHistory() {
-        chatHistory.innerHTML = "";
+            // Mode selection
+            modeBtns.forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    if (isProcessing) return;
+                    modeBtns.forEach((b) => {
+                        b.classList.remove("bg-dark-text/10");
+                        b.classList.add("hover:bg-dark-text/10");
+                    });
+                    btn.classList.add("bg-dark-text/10");
+                    btn.classList.remove("hover:bg-dark-text/10");
+                    currentMode = btn.dataset.mode;
+                });
+            });
 
-        sessions.forEach((session) => {
-          const historyItem = document.createElement("button");
-          historyItem.className =
-            "w-full text-left px-3 py-2 rounded-lg hover:bg-dark-hover transition-colors text-sm truncate";
+            // Send message
+            sendBtn.addEventListener("click", sendMessage);
+            messageInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" && !e.shiftKey && !isProcessing) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
 
-          if (session.session_id === currentSessionId) {
-            historyItem.classList.add("session-active");
-          }
+            // New chat
+            newChatBtn.addEventListener("click", createNewSession);
 
-          historyItem.textContent = session.title;
-          historyItem.onclick = () => {
-            switchSession(session.session_id, session.title);
-          };
+            // Clear chat
+            clearBtn.addEventListener("click", async () => {
+                if (isProcessing || !currentSessionId) return;
 
-          chatHistory.appendChild(historyItem);
-        });
+                try {
+                    const response = await fetch(`${API_URL}/clear`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${authToken}`,
+                        },
+                        body: JSON.stringify({ session_id: currentSessionId }),
+                    });
 
-        lucide.createIcons();
-      }
+                    if (response.ok) {
+                        clearChat();
+                        addSystemMessage("대화 기록이 삭제되었습니다");
+                    }
+                } catch (error) {
+                    console.error("Clear error:", error);
+                    addSystemMessage("오류: " + error.message);
+                }
+            });
 
-      // Auto-resize textarea
-      messageInput.addEventListener("input", function () {
-        this.style.height = "auto";
-        this.style.height = Math.min(this.scrollHeight, 200) + "px";
-        charCount.textContent = this.value.length;
-      });
+            function clearChat() {
+                const messages = chatContainer.querySelectorAll(
+                    ".message-item, .system-message",
+                );
+                messages.forEach((msg) => msg.remove());
+                welcomeMessage.classList.remove("hidden");
+            }
 
-      // Mode selection
-      modeBtns.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          if (isProcessing) return;
-          modeBtns.forEach((b) => {
-            b.classList.remove("bg-dark-text/10");
-            b.classList.add("hover:bg-dark-text/10");
-          });
-          btn.classList.add("bg-dark-text/10");
-          btn.classList.remove("hover:bg-dark-text/10");
-          currentMode = btn.dataset.mode;
-        });
-      });
+            // Message functions
+            function addMessage(role, content, isMarkdown = false) {
+                welcomeMessage.classList.add("hidden");
 
-      // Send message
-      sendBtn.addEventListener("click", sendMessage);
-      messageInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && !e.shiftKey && !isProcessing) {
-          e.preventDefault();
-          sendMessage();
-        }
-      });
+                const messageDiv = document.createElement("div");
+                messageDiv.className =
+                    "message-item flex gap-4 max-w-3xl m-[0_auto]";
 
-      // New chat
-      newChatBtn.addEventListener("click", createNewSession);
+                const avatar = document.createElement("div");
+                avatar.className =
+                    "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0";
 
-      // Clear chat
-      clearBtn.addEventListener("click", async () => {
-        if (isProcessing || !currentSessionId) return;
+                if (role === "user") {
+                    avatar.className += " bg-amber-700 text-white";
+                    avatar.innerHTML =
+                        '<i data-lucide="user" class="w-4 h-4"></i>';
+                } else {
+                    avatar.className += " bg-dark-hover";
+                    avatar.innerHTML =
+                        '<i data-lucide="bot" class="w-4 h-4"></i>';
+                }
 
-        try {
-          const response = await fetch(`${API_URL}/clear`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${authToken}`,
-            },
-            body: JSON.stringify({ session_id: currentSessionId }),
-          });
+                const contentDiv = document.createElement("div");
+                contentDiv.className = "flex-1 space-y-2 overflow-x-scroll";
 
-          if (response.ok) {
-            clearChat();
-            addSystemMessage("대화 기록이 삭제되었습니다");
-          }
-        } catch (error) {
-          console.error("Clear error:", error);
-          addSystemMessage("오류: " + error.message);
-        }
-      });
+                const messageContent = document.createElement("div");
+                messageContent.className = "prose prose-invert max-w-none";
 
-      function clearChat() {
-        const messages = chatContainer.querySelectorAll(
-          ".message-item, .system-message",
-        );
-        messages.forEach((msg) => msg.remove());
-        welcomeMessage.classList.remove("hidden");
-      }
+                if (role === "user") {
+                    messageContent.className +=
+                        " bg-dark-hover px-4 py-3 rounded-2xl rounded-tl-sm";
+                } else {
+                    messageContent.className += " markdown-content mt-[3px]";
+                }
 
-      // Message functions
-      function addMessage(role, content, isMarkdown = false) {
-        welcomeMessage.classList.add("hidden");
+                if (isMarkdown && role === "assistant") {
+                    messageContent.innerHTML = marked.parse(content);
+                    messageContent
+                        .querySelectorAll("pre code")
+                        .forEach((block) => {
+                            hljs.highlightElement(block);
+                        });
 
-        const messageDiv = document.createElement("div");
-        messageDiv.className = "message-item flex gap-4 max-w-3xl m-[0_auto]";
+                    // 코드 블럭에 복사 버튼 추가
+                    messageContent.querySelectorAll("pre").forEach((pre) => {
+                        addCopyButtonToCode(pre);
+                    });
+                } else {
+                    messageContent.textContent = content;
+                }
 
-        const avatar = document.createElement("div");
-        avatar.className =
-          "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0";
+                contentDiv.appendChild(messageContent);
 
-        if (role === "user") {
-          avatar.className += " bg-amber-700 text-white";
-          avatar.innerHTML = '<i data-lucide="user" class="w-4 h-4"></i>';
-        } else {
-          avatar.className += " bg-dark-hover";
-          avatar.innerHTML = '<i data-lucide="bot" class="w-4 h-4"></i>';
-        }
+                // 어시스턴트 메시지에 복사 버튼 추가
+                if (role === "assistant") {
+                    addCopyButtonToMessage(contentDiv, content);
+                }
 
-        const contentDiv = document.createElement("div");
-        contentDiv.className = "flex-1 space-y-2 overflow-x-scroll";
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(contentDiv);
 
-        const messageContent = document.createElement("div");
-        messageContent.className = "prose prose-invert max-w-none";
+                chatContainer.insertBefore(messageDiv, typingIndicator);
+                lucide.createIcons();
+                scrollToBottom();
 
-        if (role === "user") {
-          messageContent.className +=
-            " bg-dark-hover px-4 py-3 rounded-2xl rounded-tl-sm";
-        } else {
-          messageContent.className += " markdown-content mt-[3px]";
-        }
+                return messageContent;
+            }
 
-        if (isMarkdown && role === "assistant") {
-          messageContent.innerHTML = marked.parse(content);
-          messageContent.querySelectorAll("pre code").forEach((block) => {
-            hljs.highlightElement(block);
-          });
+            function createThinkingMessage() {
+                welcomeMessage.classList.add("hidden");
 
-          // 코드 블럭에 복사 버튼 추가
-          messageContent.querySelectorAll("pre").forEach((pre) => {
-            addCopyButtonToCode(pre);
-          });
-        } else {
-          messageContent.textContent = content;
-        }
+                const messageDiv = document.createElement("div");
+                messageDiv.className =
+                    "message-item flex gap-4 max-w-3xl m-[0_auto]";
 
-        contentDiv.appendChild(messageContent);
+                const avatar = document.createElement("div");
+                avatar.className =
+                    "w-8 h-8 rounded-full bg-dark-hover flex items-center justify-center flex-shrink-0";
+                avatar.innerHTML = '<i data-lucide="bot" class="w-4 h-4"></i>';
 
-        // 어시스턴트 메시지에 복사 버튼 추가
-        if (role === "assistant") {
-          addCopyButtonToMessage(contentDiv, content);
-        }
+                const contentDiv = document.createElement("div");
+                contentDiv.className =
+                    "flex-1 space-y-2 mt-[3px] overflow-x-scroll";
 
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(contentDiv);
+                const thinkingContainer = document.createElement("div");
+                thinkingContainer.className = "flex flex-col gap-2";
+                thinkingContainer.dataset.thinkingContainer = "true";
 
-        chatContainer.insertBefore(messageDiv, typingIndicator);
-        lucide.createIcons();
-        scrollToBottom();
+                const hr = document.createElement("hr");
+                hr.className = "!mt-0 !mb-4 !border-[#3a3a3a]";
 
-        return messageContent;
-      }
+                contentDiv.appendChild(thinkingContainer);
+                contentDiv.appendChild(hr);
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(contentDiv);
 
-      function createThinkingMessage() {
-        welcomeMessage.classList.add("hidden");
+                chatContainer.insertBefore(messageDiv, typingIndicator);
+                lucide.createIcons();
+                scrollToBottom();
 
-        const messageDiv = document.createElement("div");
-        messageDiv.className = "message-item flex gap-4 max-w-3xl m-[0_auto]";
+                return { messageDiv, thinkingContainer, contentDiv };
+            }
 
-        const avatar = document.createElement("div");
-        avatar.className =
-          "w-8 h-8 rounded-full bg-dark-hover flex items-center justify-center flex-shrink-0";
-        avatar.innerHTML = '<i data-lucide="bot" class="w-4 h-4"></i>';
+            function createToolMessage() {
+                welcomeMessage.classList.add("hidden");
 
-        const contentDiv = document.createElement("div");
-        contentDiv.className = "flex-1 space-y-2 mt-[3px] overflow-x-scroll";
+                const messageDiv = document.createElement("div");
+                messageDiv.className =
+                    "message-item flex gap-4 max-w-3xl m-[0_auto]";
 
-        const thinkingContainer = document.createElement("div");
-        thinkingContainer.className = "flex flex-col gap-2";
-        thinkingContainer.dataset.thinkingContainer = "true";
+                const avatar = document.createElement("div");
+                avatar.className =
+                    "w-8 h-8 rounded-full bg-dark-hover flex items-center justify-center flex-shrink-0";
+                avatar.innerHTML = '<i data-lucide="bot" class="w-4 h-4"></i>';
 
-        const hr = document.createElement("hr");
-        hr.className = "!mt-0 !mb-4 !border-[#3a3a3a]";
+                const contentDiv = document.createElement("div");
+                contentDiv.className = "w-full mt-[3px]";
 
-        contentDiv.appendChild(thinkingContainer);
-        contentDiv.appendChild(hr);
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(contentDiv);
+                const toolContainer = document.createElement("div");
+                toolContainer.className = "flex flex-col gap-[16px]";
+                toolContainer.dataset.toolContainer = "true";
 
-        chatContainer.insertBefore(messageDiv, typingIndicator);
-        lucide.createIcons();
-        scrollToBottom();
+                contentDiv.appendChild(toolContainer);
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(contentDiv);
 
-        return { messageDiv, thinkingContainer, contentDiv };
-      }
+                chatContainer.insertBefore(messageDiv, typingIndicator);
+                lucide.createIcons();
+                scrollToBottom();
 
-      function createToolMessage() {
-        welcomeMessage.classList.add("hidden");
+                return { messageDiv, toolContainer, contentDiv };
+            }
 
-        const messageDiv = document.createElement("div");
-        messageDiv.className = "message-item flex gap-4 max-w-3xl m-[0_auto]";
+            function addThinkingStep(container, todoText) {
+                const stepDiv = document.createElement("div");
+                stepDiv.className = "thinking-step flex flex-col gap-2";
+                stepDiv.dataset.stepStatus = "active";
 
-        const avatar = document.createElement("div");
-        avatar.className =
-          "w-8 h-8 rounded-full bg-dark-hover flex items-center justify-center flex-shrink-0";
-        avatar.innerHTML = '<i data-lucide="bot" class="w-4 h-4"></i>';
-
-        const contentDiv = document.createElement("div");
-        contentDiv.className = "w-full mt-[3px]";
-
-        const toolContainer = document.createElement("div");
-        toolContainer.className = "flex flex-col gap-[16px]";
-        toolContainer.dataset.toolContainer = "true";
-
-        contentDiv.appendChild(toolContainer);
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(contentDiv);
-
-        chatContainer.insertBefore(messageDiv, typingIndicator);
-        lucide.createIcons();
-        scrollToBottom();
-
-        return { messageDiv, toolContainer, contentDiv };
-      }
-
-      function addThinkingStep(container, todoText) {
-        const stepDiv = document.createElement("div");
-        stepDiv.className = "thinking-step flex flex-col gap-2";
-        stepDiv.dataset.stepStatus = "active";
-
-        const headerDiv = document.createElement("div");
-        headerDiv.className =
-          "flex items-center gap-1 cursor-pointer select-none";
-        headerDiv.innerHTML = `
+                const headerDiv = document.createElement("div");
+                headerDiv.className =
+                    "flex items-center gap-1 cursor-pointer select-none";
+                headerDiv.innerHTML = `
           <span class="text-dark-text/80 animate-pulse">${todoText}</span>
           <i data-lucide="chevron-down" class="w-4 h-4 text-dark-text/40 chevron-icon"></i>
         `;
 
-        const contentDiv = document.createElement("div");
-        contentDiv.className = "thinking-content expanded markdown-content";
-        contentDiv.innerHTML = `<p class="text-dark-text"></p>`;
+                const contentDiv = document.createElement("div");
+                contentDiv.className =
+                    "thinking-content expanded markdown-content";
+                contentDiv.innerHTML = `<p class="text-dark-text"></p>`;
 
-        // 토글 기능
-        headerDiv.addEventListener("click", () => {
-          const icon = headerDiv.querySelector(".chevron-icon");
-          const isExpanded = contentDiv.classList.contains("expanded");
+                // 토글 기능
+                headerDiv.addEventListener("click", () => {
+                    const icon = headerDiv.querySelector(".chevron-icon");
+                    const isExpanded =
+                        contentDiv.classList.contains("expanded");
 
-          if (isExpanded) {
-            contentDiv.classList.remove("expanded");
-            icon.classList.add("collapsed");
-          } else {
-            contentDiv.classList.add("expanded");
-            icon.classList.remove("collapsed");
-          }
-        });
+                    if (isExpanded) {
+                        contentDiv.classList.remove("expanded");
+                        icon.classList.add("collapsed");
+                    } else {
+                        contentDiv.classList.add("expanded");
+                        icon.classList.remove("collapsed");
+                    }
+                });
 
-        stepDiv.appendChild(headerDiv);
-        stepDiv.appendChild(contentDiv);
-        container.appendChild(stepDiv);
+                stepDiv.appendChild(headerDiv);
+                stepDiv.appendChild(contentDiv);
+                container.appendChild(stepDiv);
 
-        lucide.createIcons();
-        scrollToBottom();
+                lucide.createIcons();
+                scrollToBottom();
 
-        return {
-          stepDiv,
-          contentDiv: contentDiv.querySelector("p"),
-          contentWrapper: contentDiv,
-        };
-      }
+                return {
+                    stepDiv,
+                    contentDiv: contentDiv.querySelector("p"),
+                    contentWrapper: contentDiv,
+                };
+            }
 
-      function addToolUsage(container, toolName, toolInput, toolOutput) {
-        // 도구 이름을 한글로 변환
-        const toolNameMap = {
-          get_weather: "날씨 정보 가져오기",
-          get_datetime: "현재 시간 가져오기",
-          get_stock_price: "주식 가격 가져오기",
-          web_search: "웹 검색하기",
-        };
+            function addToolUsage(container, toolName, toolInput, toolOutput) {
+                // 도구 이름을 한글로 변환
+                const toolNameMap = {
+                    get_weather: "날씨 정보 가져오기",
+                    get_datetime: "현재 시간 가져오기",
+                    get_stock_price: "주식 가격 가져오기",
+                    web_search: "웹 검색하기",
+                };
 
-        const displayName = toolNameMap[toolName] || toolName;
+                const displayName = toolNameMap[toolName] || toolName;
 
-        const toolSection = document.createElement("div");
-        toolSection.className = "flex flex-col gap-[16px]";
+                const toolSection = document.createElement("div");
+                toolSection.className = "flex flex-col gap-[16px]";
 
-        toolSection.innerHTML = `
+                toolSection.innerHTML = `
           <div class="flex items-center gap-[4px]">
             <i data-lucide="hash" class="w-4 h-4 text-dark-text/40"></i>
             <span class="text-dark-text/80">${displayName}</span>
@@ -1323,377 +1418,446 @@
           <hr class="!mt-0 !border-[#3a3a3a]" data-separator="true" />
         `;
 
-        container.appendChild(toolSection);
-        lucide.createIcons();
-        scrollToBottom();
+                container.appendChild(toolSection);
+                lucide.createIcons();
+                scrollToBottom();
 
-        return toolSection;
-      }
+                return toolSection;
+            }
 
-      function escapeHtml(text) {
-        const div = document.createElement("div");
-        div.textContent = text;
-        return div.innerHTML;
-      }
+            function escapeHtml(text) {
+                const div = document.createElement("div");
+                div.textContent = text;
+                return div.innerHTML;
+            }
 
-      function completeThinkingStep(stepDiv, shouldCollapse = true) {
-        stepDiv.dataset.stepStatus = "completed";
-        const header = stepDiv.querySelector("span");
-        if (header) {
-          header.classList.remove("animate-pulse");
-        }
-        stepDiv.classList.add("completed");
-
-        // 사고 과정이 완료되면 기본적으로 닫기
-        if (shouldCollapse) {
-          const contentDiv = stepDiv.querySelector(".thinking-content");
-          const icon = stepDiv.querySelector(".chevron-icon");
-          if (contentDiv && icon) {
-            contentDiv.classList.remove("expanded");
-            icon.classList.add("collapsed");
-          }
-        }
-      }
-
-      function addSystemMessage(content) {
-        const messageDiv = document.createElement("div");
-        messageDiv.className =
-          "system-message flex items-center justify-center py-2";
-
-        const contentDiv = document.createElement("div");
-        contentDiv.className =
-          "text-xs text-dark-text-secondary bg-dark-hover px-3 py-1.5 rounded-full border border-dark-border";
-        contentDiv.textContent = content;
-
-        messageDiv.appendChild(contentDiv);
-        chatContainer.insertBefore(messageDiv, typingIndicator);
-        scrollToBottom();
-      }
-
-      function showTyping() {
-        typingIndicator.classList.remove("hidden");
-        scrollToBottom();
-      }
-
-      function hideTyping() {
-        typingIndicator.classList.add("hidden");
-      }
-
-      function scrollToBottom() {
-        requestAnimationFrame(() => {
-          chatContainer.scrollTop = chatContainer.scrollHeight;
-        });
-      }
-
-      async function sendMessage() {
-        const message = messageInput.value.trim();
-        if (!message || isProcessing) return;
-
-        console.log("Sending message:", message);
-        addMessage("user", message);
-
-        messageInput.value = "";
-        messageInput.style.height = "auto";
-        charCount.textContent = "0";
-
-        isProcessing = true;
-        sendBtn.disabled = true;
-        showTyping();
-
-        try {
-          const response = await fetch(`${API_URL}/chat`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${authToken}`,
-            },
-            body: JSON.stringify({
-              message: message,
-              session_id: currentSessionId,
-              mode: currentMode,
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
-          }
-
-          hideTyping();
-
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder();
-
-          let thinkingMessage = null;
-          let toolMessage = null;
-          let currentThinkingStep = null;
-          let currentToolUsage = null;
-          let currentMessageDiv = null;
-          let currentText = "";
-          let buffer = "";
-          let lastUpdateTime = 0;
-          const UPDATE_INTERVAL = 30;
-
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            buffer = lines.pop() || "";
-
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const data = line.slice(6).trim();
-
-                if (data === "[DONE]") {
-                  console.log("Stream completed");
-                  if (currentMessageDiv && currentText) {
-                    updateMessage(currentMessageDiv, currentText);
-
-                    // 최종 메시지에 복사 버튼 추가
-                    addCopyButtonToMessage(currentMessageDiv, currentText);
-                  }
-                  if (currentThinkingStep) {
-                    completeThinkingStep(currentThinkingStep.stepDiv, true);
-                  }
-                  break;
+            function completeThinkingStep(stepDiv, shouldCollapse = true) {
+                stepDiv.dataset.stepStatus = "completed";
+                const header = stepDiv.querySelector("span");
+                if (header) {
+                    header.classList.remove("animate-pulse");
                 }
+                stepDiv.classList.add("completed");
+
+                // 사고 과정이 완료되면 기본적으로 닫기
+                if (shouldCollapse) {
+                    const contentDiv =
+                        stepDiv.querySelector(".thinking-content");
+                    const icon = stepDiv.querySelector(".chevron-icon");
+                    if (contentDiv && icon) {
+                        contentDiv.classList.remove("expanded");
+                        icon.classList.add("collapsed");
+                    }
+                }
+            }
+
+            function addSystemMessage(content) {
+                const messageDiv = document.createElement("div");
+                messageDiv.className =
+                    "system-message flex items-center justify-center py-2";
+
+                const contentDiv = document.createElement("div");
+                contentDiv.className =
+                    "text-xs text-dark-text-secondary bg-dark-hover px-3 py-1.5 rounded-full border border-dark-border";
+                contentDiv.textContent = content;
+
+                messageDiv.appendChild(contentDiv);
+                chatContainer.insertBefore(messageDiv, typingIndicator);
+                scrollToBottom();
+            }
+
+            function showTyping() {
+                typingIndicator.classList.remove("hidden");
+                scrollToBottom();
+            }
+
+            function hideTyping() {
+                typingIndicator.classList.add("hidden");
+            }
+
+            function scrollToBottom() {
+                requestAnimationFrame(() => {
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                });
+            }
+
+            async function sendMessage() {
+                const message = messageInput.value.trim();
+                if (!message || isProcessing) return;
+
+                console.log("Sending message:", message);
+                addMessage("user", message);
+
+                messageInput.value = "";
+                messageInput.style.height = "auto";
+                charCount.textContent = "0";
+
+                isProcessing = true;
+                sendBtn.disabled = true;
+                showTyping();
 
                 try {
-                  const event = JSON.parse(data);
-                  handleEvent(event);
-                } catch (e) {
-                  console.error("Parse error:", e, "Data:", data);
-                }
-              }
-            }
-          }
-
-          function handleEvent(event) {
-            const { type, mode, content, is_start, session_id } = event;
-
-            if (type === "session_created") {
-              currentSessionId = session_id;
-              loadSessions();
-              return;
-            }
-
-            if (type === "tag") {
-              if (mode === "todolist") {
-                // 투두리스트 시작/종료는 무시 (내용만 활용)
-                return;
-              } else if (mode === "think") {
-                if (is_start) {
-                  // Think 모드 시작 - 사고 과정 컨테이너 생성
-                  if (!thinkingMessage) {
-                    thinkingMessage = createThinkingMessage();
-                  }
-                } else {
-                  // Think 모드 종료
-                  if (currentThinkingStep) {
-                    completeThinkingStep(currentThinkingStep.stepDiv, true);
-                    currentThinkingStep = null;
-                  }
-                }
-              } else if (mode === "todo") {
-                if (is_start && content) {
-                  // 이전 단계 완료 처리 (닫기)
-                  if (currentThinkingStep) {
-                    completeThinkingStep(currentThinkingStep.stepDiv, true);
-                  }
-
-                  // 새 사고 단계 추가
-                  if (thinkingMessage) {
-                    currentThinkingStep = addThinkingStep(
-                      thinkingMessage.thinkingContainer,
-                      content,
-                    );
-                  }
-                }
-              } else if (mode === "result") {
-                // Result 내용은 thinking step의 content에 표시
-                if (is_start) {
-                  currentText = "";
-                }
-              } else if (mode === "tool_call") {
-                if (is_start && content) {
-                  // Tool 모드 시작
-                  if (!toolMessage) {
-                    toolMessage = createToolMessage();
-                  }
-
-                  // 도구 정보 파싱
-                  try {
-                    const toolInfo = content.split(": ");
-                    const toolName = toolInfo[0];
-                    const toolArgs = toolInfo[1] || "{}";
-
-                    currentToolUsage = {
-                      tool_name: toolName,
-                      tool_input: toolArgs,
-                      tool_output: "",
-                    };
-                  } catch (e) {
-                    console.error("Tool info parse error:", e);
-                  }
-                }
-              } else if (mode === "tool_result") {
-                if (is_start && content && currentToolUsage) {
-                  // 도구 결과 저장
-                  currentToolUsage.tool_output = content;
-
-                  // UI에 도구 사용 추가
-                  if (toolMessage) {
-                    addToolUsage(
-                      toolMessage.toolContainer,
-                      currentToolUsage.tool_name,
-                      currentToolUsage.tool_input,
-                      currentToolUsage.tool_output,
-                    );
-                  }
-
-                  currentToolUsage = null;
-                }
-              } else if (mode === "basic") {
-                if (is_start) {
-                  // 최종 응답 시작
-                  if (thinkingMessage) {
-                    // Think 모드였다면 기존 컨테이너의 contentDiv 사용
-                    currentMessageDiv = document.createElement("div");
-                    currentMessageDiv.className =
-                      "prose prose-invert max-w-none markdown-content";
-                    thinkingMessage.contentDiv.appendChild(currentMessageDiv);
-                  } else if (toolMessage) {
-                    // Tool 모드였다면 최종 응답 추가
-                    currentMessageDiv = document.createElement("div");
-                    currentMessageDiv.className =
-                      "prose prose-invert max-w-none markdown-content";
-                    toolMessage.toolContainer.appendChild(currentMessageDiv);
-                  } else {
-                    // 일반 모드
-                    currentMessageDiv = addMessage("assistant", "");
-                  }
-                  currentText = "";
-                } else {
-                  // 최종 응답 종료
-                  if (currentMessageDiv && currentText) {
-                    updateMessage(currentMessageDiv, currentText);
-                  }
-                  currentMessageDiv = null;
-                }
-              }
-            } else if (type === "stream") {
-              if (mode === "result" && currentThinkingStep && content) {
-                // 사고 단계 내용 업데이트 (Markdown 포함)
-                const wrapper = currentThinkingStep.contentWrapper;
-                if (wrapper) {
-                  const p = currentThinkingStep.contentDiv;
-                  const currentMarkdownText = p.dataset.rawText || "";
-                  const newMarkdownText = currentMarkdownText + content;
-                  p.dataset.rawText = newMarkdownText;
-
-                  // Markdown 파싱 및 렌더링
-                  try {
-                    wrapper.innerHTML = marked.parse(newMarkdownText);
-                    wrapper.querySelectorAll("pre code").forEach((block) => {
-                      if (!block.dataset.highlighted) {
-                        hljs.highlightElement(block);
-                        block.dataset.highlighted = "yes";
-                      }
+                    const response = await fetch(`${API_URL}/chat`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${authToken}`,
+                        },
+                        body: JSON.stringify({
+                            message: message,
+                            session_id: currentSessionId,
+                            mode: currentMode,
+                        }),
                     });
 
-                    // 코드 블럭에 복사 버튼 추가
-                    wrapper.querySelectorAll("pre").forEach((pre) => {
-                      addCopyButtonToCode(pre);
-                    });
-                  } catch (e) {
-                    console.error("Markdown parse error:", e);
-                    p.textContent = newMarkdownText;
-                  }
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+
+                    hideTyping();
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+
+                    let thinkingMessage = null;
+                    let toolMessage = null;
+                    let currentThinkingStep = null;
+                    let currentToolUsage = null;
+                    let currentMessageDiv = null;
+                    let currentText = "";
+                    let buffer = "";
+                    let lastUpdateTime = 0;
+                    const UPDATE_INTERVAL = 30;
+
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split("\n");
+                        buffer = lines.pop() || "";
+
+                        for (const line of lines) {
+                            if (line.startsWith("data: ")) {
+                                const data = line.slice(6).trim();
+
+                                if (data === "[DONE]") {
+                                    console.log("Stream completed");
+                                    if (currentMessageDiv && currentText) {
+                                        updateMessage(
+                                            currentMessageDiv,
+                                            currentText,
+                                        );
+
+                                        // 최종 메시지에 복사 버튼 추가
+                                        addCopyButtonToMessage(
+                                            currentMessageDiv,
+                                            currentText,
+                                        );
+                                    }
+                                    if (currentThinkingStep) {
+                                        completeThinkingStep(
+                                            currentThinkingStep.stepDiv,
+                                            true,
+                                        );
+                                    }
+                                    break;
+                                }
+
+                                try {
+                                    const event = JSON.parse(data);
+                                    handleEvent(event);
+                                } catch (e) {
+                                    console.error(
+                                        "Parse error:",
+                                        e,
+                                        "Data:",
+                                        data,
+                                    );
+                                }
+                            }
+                        }
+                    }
+
+                    function handleEvent(event) {
+                        const { type, mode, content, is_start, session_id } =
+                            event;
+
+                        if (type === "session_created") {
+                            currentSessionId = session_id;
+                            loadSessions();
+                            return;
+                        }
+
+                        if (type === "tag") {
+                            if (mode === "todolist") {
+                                // 투두리스트 시작/종료는 무시 (내용만 활용)
+                                return;
+                            } else if (mode === "think") {
+                                if (is_start) {
+                                    // Think 모드 시작 - 사고 과정 컨테이너 생성
+                                    if (!thinkingMessage) {
+                                        thinkingMessage =
+                                            createThinkingMessage();
+                                    }
+                                } else {
+                                    // Think 모드 종료
+                                    if (currentThinkingStep) {
+                                        completeThinkingStep(
+                                            currentThinkingStep.stepDiv,
+                                            true,
+                                        );
+                                        currentThinkingStep = null;
+                                    }
+                                }
+                            } else if (mode === "todo") {
+                                if (is_start && content) {
+                                    // 이전 단계 완료 처리 (닫기)
+                                    if (currentThinkingStep) {
+                                        completeThinkingStep(
+                                            currentThinkingStep.stepDiv,
+                                            true,
+                                        );
+                                    }
+
+                                    // 새 사고 단계 추가
+                                    if (thinkingMessage) {
+                                        currentThinkingStep = addThinkingStep(
+                                            thinkingMessage.thinkingContainer,
+                                            content,
+                                        );
+                                    }
+                                }
+                            } else if (mode === "result") {
+                                // Result 내용은 thinking step의 content에 표시
+                                if (is_start) {
+                                    currentText = "";
+                                }
+                            } else if (mode === "tool_call") {
+                                if (is_start && content) {
+                                    // Tool 모드 시작
+                                    if (!toolMessage) {
+                                        toolMessage = createToolMessage();
+                                    }
+
+                                    // 도구 정보 파싱
+                                    try {
+                                        const toolInfo = content.split(": ");
+                                        const toolName = toolInfo[0];
+                                        const toolArgs = toolInfo[1] || "{}";
+
+                                        currentToolUsage = {
+                                            tool_name: toolName,
+                                            tool_input: toolArgs,
+                                            tool_output: "",
+                                        };
+                                    } catch (e) {
+                                        console.error(
+                                            "Tool info parse error:",
+                                            e,
+                                        );
+                                    }
+                                }
+                            } else if (mode === "tool_result") {
+                                if (is_start && content && currentToolUsage) {
+                                    // 도구 결과 저장
+                                    currentToolUsage.tool_output = content;
+
+                                    // UI에 도구 사용 추가
+                                    if (toolMessage) {
+                                        addToolUsage(
+                                            toolMessage.toolContainer,
+                                            currentToolUsage.tool_name,
+                                            currentToolUsage.tool_input,
+                                            currentToolUsage.tool_output,
+                                        );
+                                    }
+
+                                    currentToolUsage = null;
+                                }
+                            } else if (mode === "basic") {
+                                if (is_start) {
+                                    // 최종 응답 시작
+                                    if (thinkingMessage) {
+                                        // Think 모드였다면 기존 컨테이너의 contentDiv 사용
+                                        currentMessageDiv =
+                                            document.createElement("div");
+                                        currentMessageDiv.className =
+                                            "prose prose-invert max-w-none markdown-content";
+                                        thinkingMessage.contentDiv.appendChild(
+                                            currentMessageDiv,
+                                        );
+                                    } else if (toolMessage) {
+                                        // Tool 모드였다면 최종 응답 추가
+                                        currentMessageDiv =
+                                            document.createElement("div");
+                                        currentMessageDiv.className =
+                                            "prose prose-invert max-w-none markdown-content";
+                                        toolMessage.toolContainer.appendChild(
+                                            currentMessageDiv,
+                                        );
+                                    } else {
+                                        // 일반 모드
+                                        currentMessageDiv = addMessage(
+                                            "assistant",
+                                            "",
+                                        );
+                                    }
+                                    currentText = "";
+                                } else {
+                                    // 최종 응답 종료
+                                    if (currentMessageDiv && currentText) {
+                                        updateMessage(
+                                            currentMessageDiv,
+                                            currentText,
+                                        );
+                                    }
+                                    currentMessageDiv = null;
+                                }
+                            }
+                        } else if (type === "stream") {
+                            if (
+                                mode === "result" &&
+                                currentThinkingStep &&
+                                content
+                            ) {
+                                // 사고 단계 내용 업데이트 (Markdown 포함)
+                                const wrapper =
+                                    currentThinkingStep.contentWrapper;
+                                if (wrapper) {
+                                    const p = currentThinkingStep.contentDiv;
+                                    const currentMarkdownText =
+                                        p.dataset.rawText || "";
+                                    const newMarkdownText =
+                                        currentMarkdownText + content;
+                                    p.dataset.rawText = newMarkdownText;
+
+                                    // Markdown 파싱 및 렌더링
+                                    try {
+                                        wrapper.innerHTML =
+                                            marked.parse(newMarkdownText);
+                                        wrapper
+                                            .querySelectorAll("pre code")
+                                            .forEach((block) => {
+                                                if (
+                                                    !block.dataset.highlighted
+                                                ) {
+                                                    hljs.highlightElement(
+                                                        block,
+                                                    );
+                                                    block.dataset.highlighted =
+                                                        "yes";
+                                                }
+                                            });
+
+                                        // 코드 블럭에 복사 버튼 추가
+                                        wrapper
+                                            .querySelectorAll("pre")
+                                            .forEach((pre) => {
+                                                addCopyButtonToCode(pre);
+                                            });
+                                    } catch (e) {
+                                        console.error(
+                                            "Markdown parse error:",
+                                            e,
+                                        );
+                                        p.textContent = newMarkdownText;
+                                    }
+                                }
+                                scrollToBottom();
+                            } else if (
+                                mode === "basic" &&
+                                currentMessageDiv &&
+                                content
+                            ) {
+                                // 최종 응답 업데이트
+                                currentText += content;
+                                const now = Date.now();
+                                if (now - lastUpdateTime > UPDATE_INTERVAL) {
+                                    updateMessage(
+                                        currentMessageDiv,
+                                        currentText,
+                                    );
+                                    lastUpdateTime = now;
+                                }
+                            }
+                        } else if (type === "error") {
+                            hideTyping();
+                            addSystemMessage(
+                                "오류: " + (event.message || "Unknown error"),
+                            );
+                            console.error("Server error:", event);
+                        }
+                    }
+
+                    function updateMessage(div, text) {
+                        try {
+                            div.innerHTML = marked.parse(text);
+                            div.querySelectorAll("pre code").forEach(
+                                (block) => {
+                                    if (!block.dataset.highlighted) {
+                                        hljs.highlightElement(block);
+                                        block.dataset.highlighted = "yes";
+                                    }
+                                },
+                            );
+
+                            // 코드 블럭에 복사 버튼 추가
+                            div.querySelectorAll("pre").forEach((pre) => {
+                                addCopyButtonToCode(pre);
+                            });
+
+                            scrollToBottom();
+                        } catch (e) {
+                            console.error("Update message error:", e);
+                            div.textContent = text;
+                        }
+                    }
+                } catch (error) {
+                    console.error("Send message error:", error);
+                    hideTyping();
+                    addSystemMessage("오류: " + error.message);
+                } finally {
+                    isProcessing = false;
+                    sendBtn.disabled = false;
+                    messageInput.focus();
                 }
-                scrollToBottom();
-              } else if (mode === "basic" && currentMessageDiv && content) {
-                // 최종 응답 업데이트
-                currentText += content;
-                const now = Date.now();
-                if (now - lastUpdateTime > UPDATE_INTERVAL) {
-                  updateMessage(currentMessageDiv, currentText);
-                  lastUpdateTime = now;
-                }
-              }
-            } else if (type === "error") {
-              hideTyping();
-              addSystemMessage("오류: " + (event.message || "Unknown error"));
-              console.error("Server error:", event);
             }
-          }
 
-          function updateMessage(div, text) {
-            try {
-              div.innerHTML = marked.parse(text);
-              div.querySelectorAll("pre code").forEach((block) => {
-                if (!block.dataset.highlighted) {
-                  hljs.highlightElement(block);
-                  block.dataset.highlighted = "yes";
+            // Check server
+            async function checkServer() {
+                try {
+                    const response = await fetch(`${API_URL}/`);
+                    if (!response.ok) throw new Error("Server not responding");
+
+                    const data = await response.json();
+                    statusText.textContent = "Connected";
+                    statusDot.classList.remove("bg-red-500");
+                    statusDot.classList.add("bg-green-500");
+                    console.log("Server status:", data);
+                } catch (error) {
+                    statusText.textContent = "Offline";
+                    statusDot.classList.remove("bg-green-500");
+                    statusDot.classList.add("bg-red-500");
+                    console.error("Server check failed:", error);
                 }
-              });
-
-              // 코드 블럭에 복사 버튼 추가
-              div.querySelectorAll("pre").forEach((pre) => {
-                addCopyButtonToCode(pre);
-              });
-
-              scrollToBottom();
-            } catch (e) {
-              console.error("Update message error:", e);
-              div.textContent = text;
             }
-          }
-        } catch (error) {
-          console.error("Send message error:", error);
-          hideTyping();
-          addSystemMessage("오류: " + error.message);
-        } finally {
-          isProcessing = false;
-          sendBtn.disabled = false;
-          messageInput.focus();
-        }
-      }
 
-      // Check server
-      async function checkServer() {
-        try {
-          const response = await fetch(`${API_URL}/`);
-          if (!response.ok) throw new Error("Server not responding");
+            // Initialize
+            function init() {
+                checkServer();
 
-          const data = await response.json();
-          statusText.textContent = "Connected";
-          statusDot.classList.remove("bg-red-500");
-          statusDot.classList.add("bg-green-500");
-          console.log("Server status:", data);
-        } catch (error) {
-          statusText.textContent = "Offline";
-          statusDot.classList.remove("bg-green-500");
-          statusDot.classList.add("bg-red-500");
-          console.error("Server check failed:", error);
-        }
-      }
+                if (authToken && currentUser) {
+                    showMainApp();
+                } else {
+                    loginModal.classList.add("active");
+                }
 
-      // Initialize
-      function init() {
-        checkServer();
+                lucide.createIcons();
+                console.log("Versatile Chat initialized");
+            }
 
-        if (authToken && currentUser) {
-          showMainApp();
-        } else {
-          loginModal.classList.add("active");
-        }
-
-        lucide.createIcons();
-        console.log("Versatile Chat initialized");
-      }
-
-      init();
-    </script>
-  </body>
+            init();
+        </script>
+    </body>
 </html>

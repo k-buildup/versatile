@@ -46,24 +46,24 @@ $ pip install -r requirements.txt
 
 2. `.env` 파일을 생성하고 다음과 같이 작성해 주세요:
 
-   ```env
-   DB_HOST=localhost
-   DB_PORT=3306
-   DB_USER=root
-   DB_PASSWORD=
-   DB_NAME=agent_db
+    ```env
+    DB_HOST=localhost
+    DB_PORT=3306
+    DB_USER=root
+    DB_PASSWORD=
+    DB_NAME=agent_db
 
-   API_HOST=0.0.0.0
-   API_PORT=8000
+    API_HOST=0.0.0.0
+    API_PORT=8000
 
-   # 모델 경로
-   MODEL_PATH=./models/llama-3-Korean-Bllossom-8B/Q8_0.gguf
+    # 모델 경로
+    MODEL_PATH=./models/llama-3-Korean-Bllossom-8B/Q8_0.gguf
 
-   JWT_SECRET_KEY=<your-secret-key>
+    JWT_SECRET_KEY=<your-secret-key>
 
-   # 웹 검색
-   TAVILY_API_KEY=<your-tavily-api-key>
-   ```
+    # 웹 검색
+    TAVILY_API_KEY=<your-tavily-api-key>
+    ```
 
 ---
 
