@@ -1,1 +1,175 @@
 @import "tailwindcss";
+
+* {
+    font-family: "Pretendard";
+}
+
+@theme {
+    --color-dark-bg: #1a1a1a;
+    --color-dark-sidebar: #0f0f0f;
+    --color-dark-border: #2a2a2a;
+    --color-dark-hover: #252525;
+    --color-dark-text: #e5e5e5;
+    --color-dark-text-secondary: #a0a0a0;
+}
+
+body {
+    font-family: var(--font-family-sans);
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #3a3a3a;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4a4a4a;
+}
+
+.session-active {
+    background-color: #252525;
+    border-left: 2px solid #8b7355;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+}
+
+.typing-dot {
+    animation: typingBounce 1.4s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+}
+
+.markdown-content h1 {
+    font-size: 1.5em;
+}
+.markdown-content h2 {
+    font-size: 1.3em;
+}
+.markdown-content h3 {
+    font-size: 1.1em;
+}
+
+.markdown-content p {
+    margin-bottom: 1em;
+    line-height: 1.7;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-left: 1.5em;
+    margin-bottom: 1em;
+}
+
+.markdown-content ul {
+    list-style: circle !important;
+}
+
+.markdown-content ol {
+    list-style: decimal !important;
+}
+
+.markdown-content li {
+    margin-bottom: 0.3em;
+}
+
+.markdown-content code {
+    font-family:
+        Consolas, "Courier New", monospace, "Fira Code", "G마켓 산스 Medium";
+    font-size: 0.875em;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: #2a2a2a;
+    color: #e5e5e5;
+}
+
+.markdown-content pre {
+    margin: 1em 0;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #1e1e1e;
+    border: 1px solid #2a2a2a;
+    position: relative;
+}
+
+.markdown-content pre code {
+    display: block;
+    padding: 16px;
+    overflow-x: auto;
+    background: transparent;
+    font-size: 0.875em;
+    line-height: 1.5;
+}
+
+.markdown-content blockquote {
+    border-left: 3px solid #3a3a3a;
+    padding-left: 16px;
+    margin: 1em 0;
+    color: #a0a0a0;
+}
+
+.markdown-content a {
+    color: oklch(76.9% 0.188 70.08);
+    text-decoration: none;
+}
+
+.markdown-content a:hover {
+    text-decoration: underline;
+}
+
+.markdown-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid #2a2a2a;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.markdown-content th {
+    background: #252525;
+    font-weight: 600;
+}
+
+.markdown-content hr {
+    border: none;
+    border-top: 1px solid #3a3a3a;
+    margin: 1em 0;
+}
+
+@keyframes typingBounce {
+    0%,
+    60%,
+    100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-6px);
+    }
+}
