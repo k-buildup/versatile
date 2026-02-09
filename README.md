@@ -99,5 +99,5 @@ $ python server.py
 
 ### ✅ Todo
 
-- [x] tool 표시 및 저장
-- [ ] next.js 마이그레이션
+- [ ] Text-to-Image
+- [ ] Text-to-Video
